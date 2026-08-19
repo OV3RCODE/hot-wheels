@@ -555,16 +555,25 @@ function itemWiki(pref,casting,titulo,r,i,usados,extraHay){
     .map(c=>F(it,c)??'').join(' ')+' '+(extraHay||''));
   return it;
 }
-/* Busca em blocos, registrando os itens para o detalhe funcionar */
+/* Busca em blocos, registrando os itens para o detalhe funcionar.
+   A mesma versão pode aparecer na página do casting e na página da série:
+   repetida entre páginas diferentes ela é ignorada; repetida dentro da mesma
+   página (ex.: variação por país) vira um item próprio. */
 async function itensDePaginas(titulos,pref,extraHay,aoAvancar){
-  const usados=new Set(), itens=[];
-  for(let i=0;i<titulos.length;i+=4){
-    const bloco=await Promise.all(titulos.slice(i,i+4).map(async t=>{
+  const usados=new Set(), donoDaChave=new Map(), itens=[];
+  for(let i=0;i<titulos.length;i+=5){
+    const bloco=await Promise.all(titulos.slice(i,i+5).map(async t=>{
       try{ return [t,linhasVersoes(await paginaWiki(t))]; }catch(e){ return [t,[]]; }
     }));
-    for(const [t,linhas] of bloco)
-      for(const r of linhas) itens.push(itemWiki(pref,t,t,r,itens.length,usados,extraHay));
-    if(aoAvancar) aoAvancar(Math.min(i+4,titulos.length),titulos.length,itens);
+    for(const [t,linhas] of bloco) for(const r of linhas){
+      const nome=r.modelo||t;
+      const chave=`${nrm(nome)}:${r.ano||'?'}:${r.toy||'?'}:${nrm(r.cor||'?')}`;
+      const dono=donoDaChave.get(chave);
+      if(dono&&dono!==t) continue;              /* já veio de outra página */
+      donoDaChave.set(chave,t);
+      itens.push(itemWiki(pref,t,t,r,itens.length,usados,extraHay));
+    }
+    if(aoAvancar) aoAvancar(Math.min(i+5,titulos.length),titulos.length,itens);
   }
   for(const it of itens) BYID[it.id]=it;
   return itens;
@@ -572,31 +581,62 @@ async function itensDePaginas(titulos,pref,extraHay,aoAvancar){
 
 /* ---- Tooned: os da planilha + todos os castings Tooned da wiki ---- */
 const eTooned = it => nrm(F(it,'casting')||'').includes('tooned') || nrm(F(it,'serie')||'').includes('tooned');
-let TOONED_W=[], toonedEstado='vazio', toonedPasso='';
+let TOONED_W=[], toonedEstado='vazio', toonedPasso='', toonedFalha='';
+
+/* Descobre as páginas Tooned por vários caminhos, porque nenhum sozinho
+   pega tudo: "Tooned Twin Mill" aparece por prefixo, "Enzo Ferrari ('Tooned)"
+   só na busca, e a página da série lista lançamentos de castings variados. */
+async function titulosTooned(){
+  const vistos=new Set(), fora=new Set(), titulos=[];
+  const add=t=>{ if(t&&!vistos.has(t)){ vistos.add(t); titulos.push(t); } };
+  const q=async par=>{ try{ return await (await fetch(`${WIKI}?format=json&origin=*&${par}`)).json(); }catch(e){ return null; } };
+  /* títulos que começam com "Tooned" */
+  for(const pre of ['Tooned',"'Tooned"]){
+    const j=await q(`action=query&list=allpages&apnamespace=0&aplimit=500&apprefix=${encodeURIComponent(pre)}`);
+    for(const p of j?.query?.allpages||[]) add(p.title);
+  }
+  /* busca por título e busca ampla — pega "Enzo Ferrari ('Tooned)" e afins */
+  for(const termo of ['intitle:Tooned','Tooned']){
+    const j=await q(`action=query&list=search&srnamespace=0&srlimit=50&srsearch=${encodeURIComponent(termo)}`);
+    for(const s of j?.query?.search||[]) if(nrm(s.title).includes('tooned')) add(s.title);
+  }
+  /* categorias, quando existirem: membros valem mesmo sem "Tooned" no título */
+  for(const cat of ['Category:Tooned','Category:Tooned Cars','Category:Tooned Series']){
+    const j=await q(`action=query&list=categorymembers&cmnamespace=0&cmlimit=500&cmtitle=${encodeURIComponent(cat)}`);
+    for(const p of j?.query?.categorymembers||[]) add(p.title);
+  }
+  /* as páginas da série vêm por último: preenchem os castings que sobraram,
+     mas a página do próprio casting (mais detalhada) tem preferência */
+  for(const p of ['Tooned','Tooned Series']) add(p);
+  /* o que já está na planilha não é buscado de novo */
+  for(const t of titulos) if(porCasting[nrm(t)]) fora.add(t);
+  return titulos.filter(t=>!fora.has(t)).slice(0,60);
+}
+
 async function carregarTooned(){
   if(toonedEstado==='carregando') return;
-  toonedEstado='carregando'; toonedPasso='procurando os castings Tooned…';
+  toonedEstado='carregando'; toonedFalha=''; toonedPasso='procurando os Tooned na wiki…';
   try{
-    const u=`${WIKI}?action=query&format=json&origin=*&list=search&srsearch=Tooned&srnamespace=0&srlimit=50`;
-    const j=await (await fetch(u)).json();
-    const titulos=(j.query?.search||[]).map(s=>s.title)
-      .filter(t=>nrm(t).includes('tooned'))       /* só páginas de casting/série Tooned */
-      .filter(t=>!porCasting[nrm(t)])             /* o que já está na planilha não repete */
-      .slice(0,40);
-    if(!titulos.length) throw new Error('nenhum casting Tooned encontrado');
+    const titulos=await titulosTooned();
+    if(!titulos.length){ toonedFalha='a wiki não respondeu à busca'; throw new Error('busca vazia'); }
     TOONED_W=await itensDePaginas(titulos,'tw','tooned',(feitos,total,parciais)=>{
-      toonedPasso=`lendo ${feitos} de ${total} castings da wiki (${parciais.length} versões)…`;
+      toonedPasso=`lendo ${feitos} de ${total} páginas da wiki (${fmt(parciais.length)} versões)…`;
       if(V.tab==='tooned') $('#subtitle').textContent=subtituloTooned();
     });
-    toonedEstado='ok';
-  }catch(e){ toonedEstado='erro'; console.error(e); }
+    if(!TOONED_W.length) toonedFalha='as páginas encontradas não tinham tabela de versões';
+    toonedEstado=TOONED_W.length?'ok':'erro';
+  }catch(e){
+    toonedEstado='erro';
+    if(!toonedFalha) toonedFalha='sem conexão com a wiki';
+    console.error(e);
+  }
   if(V.tab==='tooned') render(); else renderTabs();
 }
 function subtituloTooned(){
   const n=ITEMS.filter(eTooned).length;
   if(toonedEstado==='carregando') return `${fmt(n)} da planilha · ${toonedPasso}`;
-  if(toonedEstado==='erro') return `${fmt(n)} da planilha · não consegui buscar os demais na wiki (precisa de internet).`;
-  return `${fmt(n)} da planilha + ${fmt(TOONED_W.length)} da Hot Wheels Wiki — todo carro em estilo Tooned.`;
+  if(toonedEstado==='erro') return `${fmt(n)} da planilha · não trouxe os demais da wiki (${toonedFalha}). Toque em Tooned de novo para tentar outra vez.`;
+  return `${fmt(n)} da planilha + ${fmt(TOONED_W.length)} da Hot Wheels Wiki — todo carro em estilo Tooned, de qualquer marca.`;
 }
 
 /* ---- Kool Kombi: casting Volkswagen, 100% vindo da wiki ---- */
@@ -1103,7 +1143,8 @@ document.addEventListener('click',e=>{
   if(el.closest('#mZoom')){ fechar('mZoom'); return; }
   const modal=el.classList&&el.classList.contains('modal')?el:null; if(modal){ fechar(modal.id); return; }
 
-  const tab=el.closest('[data-tab]'); if(tab){ setTab(tab.dataset.tab); return; }
+  const tab=el.closest('[data-tab]');
+  if(tab){ if(tab.dataset.tab==='tooned'&&toonedEstado==='erro') toonedEstado='vazio'; setTab(tab.dataset.tab); return; }
   if(el.closest('#btnHelp')){ renderHelp(); return; }
   const chip=el.closest('[data-st]'); if(chip){ V.st=chip.dataset.st; render(); return; }
   if(el.closest('#btnKoolRetry')){ koolEstado='vazio'; render(); return; }
