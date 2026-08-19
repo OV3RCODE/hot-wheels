@@ -286,6 +286,8 @@ for(const it of ITEMS){ const k=nrm(F(it,'casting')||''); (porCasting[k] ||= [])
 const LS_KEY='hwc.state.v1';
 let ST = {it:{}, covers:{}};
 try{ const raw=localStorage.getItem(LS_KEY); if(raw) ST=Object.assign(ST,JSON.parse(raw)); }catch(e){}
+/* capas v2 preferem imagem de cartela/blister — descarta capas antigas (só a foto solta) */
+if(ST.coversV!==2){ ST.covers={}; ST.coversV=2; }
 let saveT=null;
 function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ localStorage.setItem(LS_KEY,JSON.stringify(ST)); }catch(e){ toast('Não consegui salvar (armazenamento cheio?)'); } },250); }
 const stOf = id => ST.it[id] || {};
@@ -362,7 +364,8 @@ function urlWikiPagina(it){
   for(const c of ['pagina','fonte']){ const u=F(it,c); if(u && /fandom\.com\/wiki\//.test(u)) return u; }
   return null;
 }
-/* capas por casting: busca em lote a imagem principal da página */
+/* capas por casting: busca em lote uma imagem de cartela/blister da página
+   (cai para a imagem principal quando a página não tem foto de cartela) */
 const coverWait={}; let coverT=null;
 function pedirCover(title,img){
   if(wikiAutoOff||!navigator.onLine) return;
@@ -370,17 +373,43 @@ function pedirCover(title,img){
   (coverWait[title] ||= []).push(img);
   clearTimeout(coverT); coverT=setTimeout(buscarCovers,400);
 }
+function melhorCartela(imgs){
+  let best=null,bestN=0;
+  for(const im of imgs||[]){
+    const n=im.title||'';
+    if(/\.svg$/i.test(n)) continue;
+    let s=0;
+    if(/carded/i.test(n)) s=3;
+    else if(/card|blister|cartela/i.test(n)) s=2;
+    else if(/pack(age)?/i.test(n)) s=1;
+    if(s>bestN){ bestN=s; best=n; }
+  }
+  return best;
+}
 async function buscarCovers(){
   if(wikiAutoOff){ for(const t in coverWait) delete coverWait[t]; return; }
-  const titles=Object.keys(coverWait).filter(t=>!(t in ST.covers)).slice(0,50);
+  const titles=Object.keys(coverWait).filter(t=>!(t in ST.covers)).slice(0,12);
   if(!titles.length) return;
   try{
-    const u=`${WIKI}?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=360&titles=${encodeURIComponent(titles.join('|'))}`;
+    const u=`${WIKI}?action=query&format=json&origin=*&redirects=1&prop=pageimages%7Cimages&piprop=thumbnail&pithumbsize=360&imlimit=500&titles=${encodeURIComponent(titles.join('|'))}`;
     const j=await (await fetch(u)).json();
     const alias={}; for(const n of (j.query?.normalized||[])) alias[n.from]=n.to;
     for(const r of (j.query?.redirects||[])){ for(const k in alias) if(alias[k]===r.from) alias[k]=r.to; alias[r.from]=r.to; }
-    const byTitle={}; for(const p of Object.values(j.query?.pages||{})) byTitle[p.title]=p.thumbnail?.source||0;
-    for(const t of titles){ const fin=alias[t]||t; ST.covers[t]=byTitle[fin]||0; }
+    const byTitle={}, cartela={};
+    for(const p of Object.values(j.query?.pages||{})){
+      byTitle[p.title]=p.thumbnail?.source||0;
+      const f=melhorCartela(p.images); if(f) cartela[p.title]=f;
+    }
+    /* resolve a URL das imagens de cartela escolhidas */
+    const files=[...new Set(Object.values(cartela))], fileUrl={};
+    if(files.length){
+      const u2=`${WIKI}?action=query&format=json&origin=*&prop=imageinfo&iiprop=url&iiurlwidth=360&titles=${encodeURIComponent(files.join('|'))}`;
+      const j2=await (await fetch(u2)).json();
+      for(const p of Object.values(j2.query?.pages||{})){
+        const ii=p.imageinfo?.[0]; if(ii) fileUrl[p.title]=ii.thumburl||ii.url;
+      }
+    }
+    for(const t of titles){ const fin=alias[t]||t; ST.covers[t]=fileUrl[cartela[fin]]||byTitle[fin]||0; }
     save();
     for(const t of titles) aplicarCover(t);
   }catch(e){ wikiAutoOff=true; }
@@ -503,10 +532,10 @@ async function hidratarThumb(card,it){
   const img=card.querySelector('.thumb img'); if(!img) return;
   const s=stOf(it.id);
   let src=null;
-  if(s.fm) src=await fotoUrl(`${it.id}:m:t`);
-  if(!src&&s.fb) src=await fotoUrl(`${it.id}:b:t`);
-  if(!src&&s.wm) src=wikiThumb(s.wm,240);
+  if(s.fb) src=await fotoUrl(`${it.id}:b:t`);
+  if(!src&&s.fm) src=await fotoUrl(`${it.id}:m:t`);
   if(!src&&s.wb) src=wikiThumb(s.wb,240);
+  if(!src&&s.wm) src=wikiThumb(s.wm,240);
   if(!src){
     const t=tituloWiki(it);
     if(t){ if(ST.covers[t]) src=ST.covers[t]; else if(!(t in ST.covers)){ pedirCover(t,img); } }
@@ -645,7 +674,7 @@ async function hidratarSlot(root,it,slot){
   let src=null, origem='';
   if(temFoto){ src=await fotoUrl(`${it.id}:${slot}`); origem='minha foto'; }
   if(!src&&wiki){ src=wikiThumb(wiki,700); origem='wiki'; }
-  if(!src&&slot==='m'){ const t=tituloWiki(it); if(t&&ST.covers[t]){ src=ST.covers[t]; origem='wiki (casting)'; } }
+  if(!src&&slot==='b'){ const t=tituloWiki(it); if(t&&ST.covers[t]){ src=ST.covers[t]; origem='wiki (capa do casting)'; } }
   if(src){ img.src=src; img.onload=()=>{img.classList.add('ok')}; tag.textContent=origem; tag.style.display='block'; }
 }
 function renderDetail(id){
@@ -785,7 +814,8 @@ async function importarBackup(file){
     const j=JSON.parse(await file.text());
     if(j.app!=='hwc') throw new Error('formato');
     Object.assign(ST.it,j.estado?.it||{});
-    Object.assign(ST.covers,j.estado?.covers||{});
+    /* capas de backups antigos (v1) eram da foto solta — ignora e deixa rebuscar */
+    if(j.estado?.coversV===2) Object.assign(ST.covers,j.estado?.covers||{});
     save();
     let n=0;
     for(const f of (j.fotos||[])){
@@ -813,7 +843,7 @@ function renderHelp(){
       <li><b>Fotos</b> — abra um item e use <b>📷</b> para fotografar a <b>miniatura solta</b> e o <b>blister</b> (no celular abre a câmera). Use <b>🌐 Wiki</b> para escolher uma foto de referência da Hot Wheels Wiki — quando a linha da tabela tem o mesmo Toy #, ela aparece marcada com <b>✓</b>.</li>
       <li><b>Busca e filtros</b> — a busca cobre casting, modelo, série, cor, Toy #, tampo e notas. Os filtros mostram a contagem de cada opção.</li>
       <li><b>Backup</b> — no Painel, exporte um arquivo .json com marcações, notas e fotos; importe no outro aparelho. Sem backup, os dados vivem só neste navegador.</li>
-      <li><b>Capas automáticas</b> — online, o app busca a foto principal de cada casting na wiki para os cards ainda sem foto.</li>
+      <li><b>Capas automáticas</b> — online, o app busca uma foto <b>na cartela/blister</b> de cada casting na wiki para os cards ainda sem foto (se a página não tiver foto de cartela, usa a foto principal).</li>
     </ul>
     <h3>Critérios da pesquisa</h3>
     <table class="help-tab">${guia}</table>

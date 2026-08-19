@@ -26,7 +26,8 @@ pesquisa fechada em 15/08/2026).
     As fotos ficam guardadas no próprio navegador (IndexedDB), redimensionadas para economizar espaço.
   - **🌐 Wiki** — busca as fotos da página do casting na Hot Wheels Wiki (Fandom) e deixa você
     escolher; quando a linha da tabela tem o **mesmo Toy #**, ela vem marcada com ✓.
-  - **Capas automáticas** — online, os cards sem foto recebem a imagem principal do casting.
+  - **Capas automáticas** — online, os cards sem foto recebem uma foto do casting **na cartela/blister**
+    (ou a imagem principal da página, quando não há foto de cartela).
 - **Busca** (casting, modelo, série, cor, Toy #, tampo, ano…) e **filtros** com contagem:
   status, ano, tipo, raridade, prioridade, escala/escopo, situação e com/sem foto.
 - **Castings**: um card por molde com o range de anos, total de versões e seu progresso — toque
