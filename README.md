@@ -45,6 +45,7 @@ pesquisa fechada em 15/08/2026).
 | `app/template.html` | Código-fonte do app (HTML/CSS/JS) |
 | `tools/build.py` | Gera o `index.html` a partir da planilha + template |
 | `data/…checklist.xlsx` | A planilha original com todos os dados |
+| `manifest.webmanifest` + `icons/` | Nome e ícone do app na tela inicial do celular |
 
 ## Atualizar os dados
 
