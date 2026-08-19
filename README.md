@@ -32,6 +32,12 @@ pesquisa fechada em 15/08/2026).
   status, ano, tipo, raridade, prioridade, escala/escopo, situação e com/sem foto.
 - **Castings**: um card por molde com o range de anos, total de versões e seu progresso — toque
   para ver todas as versões daquele molde.
+- **Tooned**: aba com as versões cartunizadas da planilha — castings com "Tooned" no nome
+  (`Tooned Porsche`, `Enzo Ferrari ('Tooned)`, `Ferrari 360 Modena ('Tooned)`) e os lançamentos
+  da série Tooned, de qualquer marca ou coleção.
+- **Kool Kombi**: aba com todas as versões desse casting. Como ele é Volkswagen e a planilha cobre
+  só BMW/Porsche/Ferrari, a lista é buscada na Hot Wheels Wiki quando a aba é aberta (precisa de
+  internet); as marcações e fotos feitas nela são salvas e entram no backup como as demais.
 - **Detalhe completo** de cada item com todos os campos da planilha, links para as fontes e
   campo de **nota pessoal** (onde comprou, preço, estado…).
 - **Backup**: exporte um `.json` com marcações, notas e fotos; importe em outro aparelho.

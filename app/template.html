@@ -134,6 +134,8 @@ main{max-width:1200px;margin:0 auto;padding:14px}
 #sentinel{height:10px}
 .vazio{color:var(--mut);text-align:center;padding:56px 12px;font-size:14px}
 .vazio::before{content:'🔍';display:block;font-size:34px;margin-bottom:10px}
+.vazio.load::before{content:'🚐'}
+.vazio.erro::before{content:'📡'}
 
 /* ---------- Painel ---------- */
 .hero{position:relative;background:linear-gradient(125deg,#c81410 0%,#e2211c 38%,#ff8a00 100%);color:#fff;border:none;border-radius:20px;box-shadow:var(--shadow-up);padding:24px 20px;text-align:center;margin-bottom:14px;overflow:hidden}
@@ -332,7 +334,7 @@ const nrm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036
 const fmt = n => n.toLocaleString('pt-BR');
 const $ = s => document.querySelector(s);
 
-const MARCAS = {bmw:'BMW', porsche:'Porsche', ferrari:'Ferrari', outras:'Outras linhas'};
+const MARCAS = {bmw:'BMW', porsche:'Porsche', ferrari:'Ferrari', outras:'Outras linhas', kool:'Kool Kombi'};
 const ITEMS = [];
 for(const m of DATA.marcas){
   m.itens.forEach((v,i)=>{
@@ -488,19 +490,94 @@ function aplicarCover(title){
 }
 function wikiFull(src){ return src.replace(/\/scale-to-width-down\/\d+/,''); }
 function wikiThumb(src,w){ const base=wikiFull(src); const m=base.match(/^(.*?\/revision\/latest)(\?.*)?$/); return m? `${m[1]}/scale-to-width-down/${w}${m[2]||''}` : base; }
+function imgDaWiki(el){
+  if(!el) return '';
+  const s=el.getAttribute('data-src')||el.getAttribute('src')||'';
+  if(!/static\.wikia/.test(s)||/\.svg/i.test(s)) return '';
+  return wikiFull(s.split('/scale-to-width-down')[0].replace(/\/smart\/.*$/,''));
+}
+
+/* ============ Coleções especiais ============ */
+/* Tooned: castings cartunizados ("Tooned Porsche", "Enzo Ferrari ('Tooned)")
+   e lançamentos da série Tooned, em qualquer marca/coleção da planilha. */
+const eTooned = it => nrm(F(it,'casting')||'').includes('tooned') || nrm(F(it,'serie')||'').includes('tooned');
+
+/* Kool Kombi: não existe na planilha (que cobre só BMW/Porsche/Ferrari),
+   então a lista de versões vem da Hot Wheels Wiki no navegador do usuário. */
+const KOOL_PAGINA='https://hotwheels.fandom.com/wiki/Kool_Kombi';
+let KOOL=[], koolEstado='vazio'; /* vazio | carregando | ok | erro */
+
+function itemKool(r,i,usados){
+  const v=new Array(DATA.cols.length).fill(null);
+  const set=(c,val)=>{ if(val!=null&&val!=='') v[CI[c]]=val; };
+  set('ano',r.ano); set('casting','Kool Kombi'); set('modelo','Kool Kombi');
+  set('serie',r.serie); set('ncol',r.col); set('toy',r.toy); set('cor',r.cor);
+  set('tampo',r.tampo); set('rodas',r.rodas); set('pais',r.pais); set('notas',r.notas);
+  set('pagina',KOOL_PAGINA);
+  /* id estável por ano+toy+cor para as marcações sobreviverem a recarregamentos */
+  const base='kk:'+[r.ano||'?',r.toy||'?',nrm(r.cor||'?')].join(':');
+  let id=base, n=2; while(usados.has(id)) id=`${base}#${n++}`;
+  usados.add(id);
+  const it={id, mk:'kool', ord:i, v, img:r.img||''};
+  it.hay=nrm(['casting','serie','ncol','toy','cor','tampo','rodas','notas','pais','ano']
+    .map(c=>F(it,c)??'').join(' ')+' kool kombi volkswagen vw');
+  return it;
+}
+function parseKool(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const linhas=[], usados=new Set();
+  for(const tab of doc.querySelectorAll('table')){
+    const trs=[...tab.querySelectorAll('tr')]; if(trs.length<2) continue;
+    const head=[...trs[0].children].map(td=>nrm(td.textContent||''));
+    const idx=(...nomes)=>head.findIndex(h=>nomes.some(n=>h.includes(n)));
+    const iAno=idx('year','ano'), iToy=idx('toy'), iSerie=idx('series','serie'), iCor=idx('color'),
+          iCol=idx('col #','col#','collection'), iTampo=idx('tampo'), iRodas=idx('wheel'),
+          iPais=idx('country'), iNotas=idx('note');
+    if(iAno<0&&iToy<0) continue; /* não é uma tabela de versões */
+    for(const tr of trs.slice(1)){
+      const tds=[...tr.children]; if(tds.length<2) continue;
+      const cel=i=>(i>=0&&tds[i])?String(tds[i].textContent||'').trim().replace(/\s+/g,' '):'';
+      const ano=parseInt(cel(iAno),10);
+      const r={ano:isNaN(ano)?null:ano, toy:cel(iToy), serie:cel(iSerie), cor:cel(iCor),
+               col:cel(iCol), tampo:cel(iTampo), rodas:cel(iRodas), pais:cel(iPais),
+               notas:cel(iNotas), img:imgDaWiki(tr.querySelector('img'))};
+      if(!r.ano&&!r.toy&&!r.serie&&!r.cor) continue;
+      linhas.push(r);
+    }
+  }
+  return linhas.map((r,i)=>itemKool(r,i,usados));
+}
+async function carregarKool(){
+  if(koolEstado==='carregando') return;
+  koolEstado='carregando';
+  try{
+    const u=`${WIKI}?action=parse&format=json&origin=*&redirects=1&prop=text&page=${encodeURIComponent('Kool Kombi')}`;
+    const j=await (await fetch(u)).json();
+    const html=j.parse?.text?.['*']; if(!html) throw new Error(j.error?.info||'sem conteúdo');
+    KOOL=parseKool(html);
+    for(const it of KOOL) BYID[it.id]=it;
+    koolEstado=KOOL.length?'ok':'erro';
+  }catch(e){ koolEstado='erro'; console.error(e); }
+  if(V.tab==='kool') render(); else renderTabs();
+}
 
 /* ============ Estado da interface ============ */
 const V={tab:'painel', q:'', st:'', ano:'', tipo:'', rar:'', pri:'', escopo:'', sit:'', foto:'', sort:'plan', fOpen:false};
 let listItems=[], listPos=0, detailId=null;
 
-const TABS=[['painel','Painel'],['todos','Todos'],['bmw','BMW'],['porsche','Porsche'],['ferrari','Ferrari'],['outras','Outras linhas'],['castings','Castings']];
+const TABS=[['painel','Painel'],['todos','Todos'],['bmw','BMW'],['porsche','Porsche'],['ferrari','Ferrari'],['outras','Outras linhas'],['tooned','Tooned'],['kool','Kool Kombi'],['castings','Castings']];
+function contaTab(k){
+  if(k==='todos') return ITEMS.length;
+  if(k==='tooned') return ITEMS.filter(eTooned).length;
+  if(k==='kool') return KOOL.length||null;
+  if(k==='castings') return DATA.castings.length;
+  if(MARCAS[k]) return ITEMS.filter(i=>i.mk===k).length;
+  return null;
+}
 function renderTabs(){
   $('#tabs').innerHTML=TABS.map(([k,label])=>{
-    let n='';
-    if(k==='todos') n=`<span class="n">${fmt(ITEMS.length)}</span>`;
-    else if(MARCAS[k]) n=`<span class="n">${fmt(ITEMS.filter(i=>i.mk===k).length)}</span>`;
-    else if(k==='castings') n=`<span class="n">${fmt(DATA.castings.length)}</span>`;
-    return `<button data-tab="${k}" class="${V.tab===k?'on':''}">${label}${n}</button>`;
+    const c=contaTab(k);
+    return `<button data-tab="${k}" class="${V.tab===k?'on':''}">${label}${c==null?'':`<span class="n">${fmt(c)}</span>`}</button>`;
   }).join('');
 }
 
@@ -508,7 +585,12 @@ function setTab(k){ V.tab=k; render(); window.scrollTo({top:0}); }
 function limparFiltros(){ Object.assign(V,{st:'',ano:'',tipo:'',rar:'',pri:'',escopo:'',sit:'',foto:''}); }
 
 /* ============ Filtros ============ */
-function escopoItens(){ return V.tab==='todos' ? ITEMS : ITEMS.filter(i=>i.mk===V.tab); }
+function escopoItens(){
+  if(V.tab==='todos') return ITEMS;
+  if(V.tab==='tooned') return ITEMS.filter(eTooned);
+  if(V.tab==='kool') return KOOL;
+  return ITEMS.filter(i=>i.mk===V.tab);
+}
 const kf=(it,col)=>{ const v=F(it,col); return v==null?'∅':String(v); };
 function opcoes(items,col){
   const set=new Map();
@@ -516,6 +598,8 @@ function opcoes(items,col){
   return [...set.entries()].sort((a,b)=>a[0].localeCompare(b[0],'pt',{numeric:true}));
 }
 function montarSelect(el,rotulo,pares,val,vazioLabel){
+  /* esconde o filtro quando a aba não tem nenhum valor preenchido para ele */
+  el.classList.toggle('hide', !val && !pares.some(([v])=>v!=='∅'));
   el.innerHTML=`<option value="">${rotulo}</option>`+
     pares.map(([v,n])=>`<option value="${esc(v)}" ${val!==''&&v===val?'selected':''}>${v==='∅'?vazioLabel:esc(v)} (${fmt(n)})</option>`).join('');
   el.classList.toggle('on',!!val);
@@ -606,6 +690,7 @@ async function hidratarThumb(card,it){
   if(!src&&s.fm) src=await fotoUrl(`${it.id}:m:t`);
   if(!src&&s.wb) src=wikiThumb(s.wb,240);
   if(!src&&s.wm) src=wikiThumb(s.wm,240);
+  if(!src&&it.img) src=wikiThumb(it.img,240);
   if(!src){
     const t=tituloWiki(it);
     if(t){ if(ST.covers[t]) src=ST.covers[t]; else if(!(t in ST.covers)){ pedirCover(t,img); } }
@@ -626,8 +711,21 @@ function render(){
   $('#sentinel').classList.add('hide');
   if(V.tab==='painel'){ $('#subtitle').textContent=DATA.titulo; renderPainel(); return; }
   if(V.tab==='castings'){ $('#subtitle').textContent='Um card por molde. Toque para ver todas as versões dele.'; renderCastings(); return; }
+  if(V.tab==='kool'&&koolEstado!=='ok'){
+    $('#subtitle').textContent='Todas as versões da Kool Kombi, direto da Hot Wheels Wiki.';
+    if(koolEstado==='vazio') carregarKool();
+    content.innerHTML = koolEstado==='erro'
+      ? `<p class="vazio erro">Não consegui carregar a lista da Kool Kombi agora — isso precisa de internet.<br>
+         <a href="${KOOL_PAGINA}" target="_blank" rel="noopener">Abrir a página na wiki ↗</a><br>
+         <button class="btn" id="btnKoolRetry" style="margin-top:14px">Tentar de novo</button></p>`
+      : '<p class="vazio load">Buscando as versões da Kool Kombi na Hot Wheels Wiki…</p>';
+    return;
+  }
   const m=DATA.marcas.find(x=>x.key===V.tab);
-  $('#subtitle').textContent=m?m.desc:'Todas as marcas em uma lista só.';
+  $('#subtitle').textContent = m ? m.desc
+    : V.tab==='tooned' ? 'Versões cartunizadas: castings "Tooned" e lançamentos da série Tooned, em todas as coleções da planilha.'
+    : V.tab==='kool' ? `${fmt(KOOL.length)} versões listadas na Hot Wheels Wiki — marque as suas normalmente.`
+    : 'Todas as marcas em uma lista só.';
   renderControles();
   listItems=filtrar(); listPos=0;
   content.innerHTML='<div class="grid" id="lista"></div>';
@@ -745,6 +843,7 @@ async function hidratarSlot(root,it,slot){
   let src=null, origem='';
   if(temFoto){ src=await fotoUrl(`${it.id}:${slot}`); origem='minha foto'; }
   if(!src&&wiki){ src=wikiThumb(wiki,700); origem='wiki'; }
+  if(!src&&slot==='m'&&it.img){ src=wikiThumb(it.img,700); origem='wiki (lista)'; }
   if(!src&&slot==='b'){ const t=tituloWiki(it); if(t&&ST.covers[t]){ src=ST.covers[t]; origem='wiki (capa do casting)'; } }
   if(src){ img.src=src; img.onload=()=>{img.classList.add('ok')}; tag.textContent=origem; tag.style.display='block'; }
 }
@@ -914,6 +1013,8 @@ function renderHelp(){
       <li><b>Fotos</b> — abra um item e use <b>📷</b> para fotografar a <b>miniatura solta</b> e o <b>blister</b> (no celular abre a câmera). Use <b>🌐 Wiki</b> para escolher uma foto de referência da Hot Wheels Wiki — quando a linha da tabela tem o mesmo Toy #, ela aparece marcada com <b>✓</b>.</li>
       <li><b>Busca e filtros</b> — a busca cobre casting, modelo, série, cor, Toy #, tampo e notas. Os filtros mostram a contagem de cada opção.</li>
       <li><b>Backup</b> — no Painel, exporte um arquivo .json com marcações, notas e fotos; importe no outro aparelho. Sem backup, os dados vivem só neste navegador.</li>
+      <li><b>Aba Tooned</b> — reúne as versões cartunizadas da planilha: castings com "Tooned" no nome e os lançamentos da série Tooned, de qualquer marca ou coleção.</li>
+      <li><b>Aba Kool Kombi</b> — esse casting é Volkswagen e não está na planilha (que cobre BMW, Porsche e Ferrari), então a lista de versões é buscada na Hot Wheels Wiki quando você abre a aba, com internet. As marcações e fotos que você fizer nela ficam salvas e entram no backup normalmente.</li>
       <li><b>Capas automáticas</b> — online, o app busca uma foto <b>na cartela/blister</b> de cada casting na wiki para os cards ainda sem foto (se a página não tiver foto de cartela, usa a foto principal).</li>
     </ul>
     <h3>Critérios da pesquisa</h3>
@@ -941,6 +1042,7 @@ document.addEventListener('click',e=>{
   const tab=el.closest('[data-tab]'); if(tab){ setTab(tab.dataset.tab); return; }
   if(el.closest('#btnHelp')){ renderHelp(); return; }
   const chip=el.closest('[data-st]'); if(chip){ V.st=chip.dataset.st; render(); return; }
+  if(el.closest('#btnKoolRetry')){ koolEstado='vazio'; render(); return; }
   if(el.closest('#btnFiltros')){ V.fOpen=!V.fOpen; $('#fpanel').classList.toggle('open',V.fOpen); $('#btnFiltros').classList.toggle('on',V.fOpen||!$('#fbN').classList.contains('hide')); return; }
   if(el.closest('#btnLimpar')){ limparFiltros(); $('#q').value=''; V.q=''; render(); return; }
 
