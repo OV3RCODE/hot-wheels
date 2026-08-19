@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minha Coleção Hot Wheels — BMW · Porsche · Ferrari</title>
+<meta name="theme-color" content="#eb6834">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23eb6834'/%3E%3Ctext x='32' y='42' font-family='Arial,sans-serif' font-size='26' font-weight='bold' fill='%23fff' text-anchor='middle'%3EHW%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  color-scheme: light dark;
+  --bg:#f9f9f7; --surf:#fcfcfb; --surf2:#f0efec; --ink:#0b0b0b; --ink2:#52514e; --mut:#898781;
+  --line:#e1e0d9; --border:rgba(11,11,11,.10);
+  --acc:#2a78d6; --acc-soft:#cde2fb; --brand:#eb6834;
+  --good:#0ca30c; --good-txt:#006300; --warn:#fab219; --crit:#d03b3b; --rara:#ec835a; --p3:#c98500;
+  --meter-fill:#2a78d6; --meter-mid:#86b6ef; --meter-track:#cde2fb;
+  --radius:14px; --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d0d0d; --surf:#1a1a19; --surf2:#242422; --ink:#ffffff; --ink2:#c3c2b7; --mut:#898781;
+    --line:#2c2c2a; --border:rgba(255,255,255,.10);
+    --acc:#3987e5; --acc-soft:#184f95; --good-txt:#0ca30c;
+    --meter-fill:#3987e5; --meter-mid:#1c5cab; --meter-track:#0d366b;
+    --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:40px}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0}
+input,select,textarea{font:inherit;color:var(--ink)}
+a{color:var(--acc)}
+img{max-width:100%}
+.hide{display:none!important}
+
+/* ---------- Cabeçalho ---------- */
+header{position:sticky;top:0;z-index:30;background:var(--surf);border-bottom:1px solid var(--line);box-shadow:var(--shadow)}
+.hd{display:flex;align-items:center;gap:10px;padding:10px 14px 6px;max-width:1200px;margin:0 auto}
+.logo{display:flex;align-items:center;gap:9px;min-width:0}
+.logo .flame{width:34px;height:34px;flex:none;border-radius:9px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;letter-spacing:.5px}
+.logo h1{font-size:16px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logo small{display:block;color:var(--mut);font-weight:400;font-size:11px;margin-top:-2px}
+.search{flex:1;display:flex;min-width:0}
+.search input{flex:1;min-width:0;background:var(--surf2);border:1px solid var(--line);border-radius:999px;padding:8px 14px;outline:none}
+.search input:focus{border-color:var(--acc)}
+#btnHelp{width:34px;height:34px;flex:none;border-radius:50%;background:var(--surf2);border:1px solid var(--line);font-weight:700;color:var(--ink2)}
+nav{max-width:1200px;margin:0 auto;display:flex;gap:2px;overflow-x:auto;padding:0 10px;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:none;padding:9px 13px;color:var(--ink2);font-weight:600;font-size:14px;border-bottom:3px solid transparent;border-radius:8px 8px 0 0}
+nav button .n{color:var(--mut);font-weight:400;font-size:12px;margin-left:4px}
+nav button.on{color:var(--ink);border-bottom-color:var(--brand)}
+nav button:hover{background:var(--surf2)}
+
+/* ---------- Controles / filtros ---------- */
+main{max-width:1200px;margin:0 auto;padding:12px 14px}
+.subtitle{color:var(--ink2);font-size:13px;margin:2px 2px 10px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:6px 12px;border-radius:999px;background:var(--surf);border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--ink2)}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.controls select{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:6px 8px;font-size:13px;max-width:170px;color:var(--ink2)}
+.controls select.on{border-color:var(--acc);color:var(--ink);font-weight:600}
+#btnLimpar{font-size:13px;color:var(--acc);font-weight:600;padding:6px 4px}
+.resumo{color:var(--mut);font-size:13px;margin:0 2px 10px}
+
+/* ---------- Cards ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:10px}
+@media(max-width:420px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px;display:grid;grid-template-columns:76px 1fr;gap:10px;cursor:pointer}
+.card:hover{border-color:var(--acc)}
+.card.tenho{border-left:4px solid var(--good)}
+.card.caminho{border-left:4px solid var(--warn)}
+.thumb{width:76px;height:76px;flex:none;border-radius:10px;background:var(--surf2);overflow:hidden;display:grid;place-items:center;position:relative}
+.thumb img{width:100%;height:100%;object-fit:cover;display:none}
+.thumb img.ok{display:block}
+.thumb img.ok~svg{display:none}
+.thumb svg{width:44px;height:44px;color:var(--mut)}
+.thumb .src{position:absolute;right:3px;bottom:3px;background:rgba(0,0,0,.55);color:#fff;font-size:9px;padding:1px 5px;border-radius:6px;display:none}
+.c-main{min-width:0;display:flex;flex-direction:column;gap:3px}
+.c-top{display:flex;gap:8px;align-items:baseline}
+.c-top h3{margin:0;font-size:15px;line-height:1.25;flex:1;min-width:0}
+.ano{flex:none;font-size:12px;font-weight:700;color:var(--ink2);background:var(--surf2);border-radius:6px;padding:1px 7px}
+.c-sub{font-size:13px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-cor{font-size:13px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-cor b{font-weight:600}
+.toy{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--mut)}
+.badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
+.bdg{font-size:11px;font-weight:600;color:var(--ink2);background:var(--surf2);border-radius:6px;padding:2px 7px;display:inline-flex;align-items:center;gap:5px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.bdg.excl{background:var(--acc-soft);color:var(--ink)}
+.ownseg{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;background:var(--surf2);border-radius:10px;padding:4px}
+.ownseg button{padding:6px 4px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--ink2)}
+.ownseg button[aria-pressed="true"].o0{background:var(--surf);color:var(--ink);box-shadow:var(--shadow);outline:1px solid var(--line)}
+.ownseg button[aria-pressed="true"].o1{background:var(--warn);color:#3a2c00}
+.ownseg button[aria-pressed="true"].o2{background:var(--good);color:#fff}
+#sentinel{height:10px}
+.vazio{color:var(--mut);text-align:center;padding:50px 10px}
+
+/* ---------- Painel ---------- */
+.hero{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;text-align:center;margin-bottom:12px}
+.hero .big{font-size:52px;font-weight:700;line-height:1.05}
+.hero .sub{color:var(--ink2);margin-top:4px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-bottom:12px}
+.tile{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;cursor:pointer;text-align:left}
+.tile h3{margin:0 0 2px;font-size:15px}
+.tile .val{font-size:26px;font-weight:700}
+.tile .val small{font-size:14px;color:var(--mut);font-weight:400}
+.meter{height:10px;border-radius:5px;background:var(--meter-track);margin:9px 0 7px;display:flex;overflow:hidden}
+.meter i{display:block;height:100%}
+.meter .m1{background:var(--meter-fill)}
+.meter .m2{background:var(--meter-mid);margin-left:2px}
+.meter .m1:first-child{border-radius:5px 0 0 5px}
+.tile .leg{font-size:12px;color:var(--ink2);display:flex;gap:10px;flex-wrap:wrap}
+.leg i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:4px}
+.tile .p1chip{margin-top:8px;font-size:12px;font-weight:600;color:var(--crit)}
+.atalhos{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:14px}
+.atalho{background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:11px 13px;text-align:left;font-weight:600;font-size:13.5px;color:var(--ink);box-shadow:var(--shadow)}
+.atalho small{display:block;color:var(--mut);font-weight:400;margin-top:1px}
+.painel-acoes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.btn{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-weight:600;font-size:13.5px;color:var(--ink2)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.nota-rodape{color:var(--mut);font-size:12px;margin-top:14px}
+
+/* ---------- Castings ---------- */
+.cast-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px;cursor:pointer}
+.cast-card h3{margin:0 0 3px;font-size:15px}
+.cast-card .meta{font-size:12.5px;color:var(--ink2)}
+.cast-card .meter{margin:8px 0 4px}
+.cast-card .prog{font-size:12px;color:var(--mut)}
+
+/* ---------- Modais ---------- */
+.modal{position:fixed;inset:0;z-index:50;display:none;background:rgba(0,0,0,.45)}
+.modal.open{display:block}
+.sheet{position:absolute;inset:auto 0 0 0;top:max(20px,env(safe-area-inset-top));background:var(--bg);border-radius:18px 18px 0 0;overflow-y:auto;overscroll-behavior:contain}
+@media(min-width:720px){.sheet{inset:40px 0;max-width:760px;margin:0 auto;border-radius:18px}}
+.sheet-hd{position:sticky;top:0;background:var(--surf);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;gap:10px;align-items:center;z-index:5;border-radius:18px 18px 0 0}
+.sheet-hd h2{margin:0;font-size:17px;flex:1;min-width:0}
+.sheet-hd .x{width:32px;height:32px;flex:none;border-radius:50%;background:var(--surf2);font-size:16px;font-weight:700;color:var(--ink2)}
+.sheet-bd{padding:14px 16px 30px}
+
+/* fotos no detalhe */
+.fotos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.slot{background:var(--surf);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.slot .img{aspect-ratio:1;background:var(--surf2);display:grid;place-items:center;cursor:zoom-in;position:relative}
+.slot .img img{width:100%;height:100%;object-fit:cover;display:none}
+.slot .img img.ok{display:block}
+.slot .img img.ok~svg{display:none}
+.slot .img svg{width:52px;height:52px;color:var(--mut)}
+.slot .img .tag{position:absolute;left:6px;top:6px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:2px 7px;border-radius:6px;display:none}
+.slot h4{margin:0;padding:8px 10px 2px;font-size:13px}
+.slot .acts{display:flex;gap:4px;padding:6px 8px 9px;flex-wrap:wrap}
+.slot .acts button{flex:1;min-width:64px;background:var(--surf2);border-radius:8px;padding:7px 4px;font-size:12px;font-weight:600;color:var(--ink2)}
+.slot .acts button:hover{background:var(--acc-soft);color:var(--ink)}
+.det-own{margin-bottom:14px}
+.det-own .ownseg{grid-column:auto}
+.det-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+dl{display:grid;grid-template-columns:minmax(110px,150px) 1fr;gap:6px 12px;margin:0 0 14px;font-size:13.5px}
+dt{color:var(--mut)}
+dd{margin:0;word-break:break-word}
+dd a{word-break:break-all}
+.nota-box textarea{width:100%;min-height:64px;background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:9px;resize:vertical}
+.det-nav{display:flex;gap:8px;justify-content:space-between;margin-top:16px}
+
+/* zoom */
+#mZoom{background:rgba(0,0,0,.92);display:none;place-items:center;cursor:zoom-out}
+#mZoom.open{display:grid}
+#mZoom img{max-width:100vw;max-height:100vh;object-fit:contain}
+
+/* wiki picker */
+.wk-status{color:var(--ink2);font-size:13.5px;margin:0 0 12px}
+.wk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.wk-item{background:var(--surf);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.wk-item.match{border-color:var(--good);border-width:2px}
+.wk-item .wi{aspect-ratio:1;background:var(--surf2);cursor:zoom-in}
+.wk-item .wi img{width:100%;height:100%;object-fit:cover}
+.wk-item figcaption{font-size:11px;color:var(--ink2);padding:5px 7px;max-height:48px;overflow:hidden}
+.wk-item .m-tag{font-size:10.5px;font-weight:700;color:var(--good-txt);padding:4px 7px 0}
+.wk-item .acts{display:flex;gap:4px;padding:6px}
+.wk-item .acts button{flex:1;background:var(--surf2);border-radius:7px;padding:6px 2px;font-size:11.5px;font-weight:600;color:var(--ink2)}
+.wk-item .acts button:hover{background:var(--acc-soft);color:var(--ink)}
+
+/* ajuda */
+.help-sec h3{font-size:14.5px;margin:16px 0 6px}
+.help-sec p,.help-sec li{font-size:13.5px;color:var(--ink2)}
+.help-tab{width:100%;border-collapse:collapse;font-size:12.5px}
+.help-tab td{border-top:1px solid var(--line);padding:6px 8px 6px 0;vertical-align:top}
+.help-tab td:first-child{color:var(--mut);white-space:nowrap;padding-right:12px}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:13.5px;font-weight:600;z-index:99;opacity:0;pointer-events:none;transition:opacity .25s;max-width:88vw;text-align:center}
+#toast.show{opacity:1}
+
+@media print{
+  header,.controls,.ownseg,.painel-acoes,#sentinel{display:none!important}
+  body{background:#fff;color:#000}
+  .card{box-shadow:none;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <div class="logo">
+      <div class="flame">HW</div>
+      <div><h1>Minha Coleção</h1><small>BMW · Porsche · Ferrari</small></div>
+    </div>
+    <div class="search"><input id="q" type="search" placeholder="Buscar casting, cor, série, toy #…" autocomplete="off"></div>
+    <button id="btnHelp" title="Ajuda e critérios">?</button>
+  </div>
+  <nav id="tabs"></nav>
+</header>
+
+<main>
+  <p class="subtitle" id="subtitle"></p>
+  <div class="controls hide" id="controls">
+    <div class="chips" id="chipsStatus"></div>
+    <select id="fAno"></select>
+    <select id="fTipo"></select>
+    <select id="fRar"></select>
+    <select id="fPri"></select>
+    <select id="fEscopo"></select>
+    <select id="fSit"></select>
+    <select id="fFoto"></select>
+    <select id="fSort"></select>
+    <button id="btnLimpar">Limpar</button>
+  </div>
+  <p class="resumo hide" id="resumo"></p>
+  <div id="content"></div>
+  <div id="sentinel"></div>
+</main>
+
+<!-- Detalhe -->
+<div class="modal" id="mDetail"><div class="sheet">
+  <div class="sheet-hd"><h2 id="dTitle"></h2><button class="x" data-close="mDetail">✕</button></div>
+  <div class="sheet-bd" id="dBody"></div>
+</div></div>
+
+<!-- Zoom -->
+<div class="modal" id="mZoom"><img alt="Imagem ampliada"></div>
+
+<!-- Wiki picker -->
+<div class="modal" id="mWiki"><div class="sheet">
+  <div class="sheet-hd"><h2 id="wTitle">Imagens da wiki</h2><button class="x" data-close="mWiki">✕</button></div>
+  <div class="sheet-bd"><p class="wk-status" id="wStatus"></p><div class="wk-grid" id="wGrid"></div></div>
+</div></div>
+
+<!-- Ajuda -->
+<div class="modal" id="mHelp"><div class="sheet">
+  <div class="sheet-hd"><h2>Ajuda e critérios</h2><button class="x" data-close="mHelp">✕</button></div>
+  <div class="sheet-bd help-sec" id="hBody"></div>
+</div></div>
+
+<div id="toast"></div>
+<input type="file" id="inpFoto" accept="image/*" class="hide">
+<input type="file" id="inpImport" accept="application/json,.json" class="hide">
+
+<script>
+'use strict';
+const DATA = __HW_DATA_JSON__;
+
+/* ============ Índices e utilidades ============ */
+const CI = {}; DATA.cols.forEach((c,i)=>CI[c]=i);
+const F = (it,c)=>it.v[CI[c]];
+const esc = s => String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const nrm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const fmt = n => n.toLocaleString('pt-BR');
+const $ = s => document.querySelector(s);
+
+const MARCAS = {bmw:'BMW', porsche:'Porsche', ferrari:'Ferrari', outras:'Outras linhas'};
+const ITEMS = [];
+for(const m of DATA.marcas){
+  m.itens.forEach((v,i)=>{
+    const it = {id:m.prefixo+(i+1), mk:m.key, v, ord:ITEMS.length};
+    it.hay = nrm(['casting','modelo','serie','nserie','ncol','toy','cor','tampo','rodas','excl','tipo','notas','pais','escopo','ano']
+      .map(c=>F(it,c)??'').join(' ')+' '+MARCAS[m.key]);
+    ITEMS.push(it);
+  });
+}
+const BYID = Object.fromEntries(ITEMS.map(it=>[it.id,it]));
+const porCasting = {};
+for(const it of ITEMS){ const k=nrm(F(it,'casting')||''); (porCasting[k] ||= []).push(it); }
+
+/* ============ Estado persistente ============ */
+const LS_KEY='hwc.state.v1';
+let ST = {it:{}, covers:{}};
+try{ const raw=localStorage.getItem(LS_KEY); if(raw) ST=Object.assign(ST,JSON.parse(raw)); }catch(e){}
+let saveT=null;
+function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ localStorage.setItem(LS_KEY,JSON.stringify(ST)); }catch(e){ toast('Não consegui salvar (armazenamento cheio?)'); } },250); }
+const stOf = id => ST.it[id] || {};
+function setSt(id,patch){ const cur=ST.it[id]||{}; Object.assign(cur,patch);
+  for(const k of Object.keys(cur)) if(cur[k]===0||cur[k]===''||cur[k]==null) delete cur[k];
+  if(Object.keys(cur).length) ST.it[id]=cur; else delete ST.it[id]; save(); }
+function own(id){ return stOf(id).o||0; } /* 0 falta · 1 a caminho · 2 tenho */
+
+/* ============ IndexedDB (fotos) ============ */
+let _db=null;
+function db(){ return _db ? Promise.resolve(_db) : new Promise((res,rej)=>{
+  const r=indexedDB.open('hwc-fotos',1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('fotos');
+  r.onsuccess=()=>{_db=r.result;res(_db)}; r.onerror=()=>rej(r.error);
+});}
+const tx = (mode,fn) => db().then(d=>new Promise((res,rej)=>{
+  const t=d.transaction('fotos',mode); const out=fn(t.objectStore('fotos'));
+  t.oncomplete=()=>res(out&&'result'in out?out.result:undefined); t.onerror=()=>rej(t.error);
+}));
+const fPut=(k,b)=>tx('readwrite',s=>s.put(b,k));
+const fDel=k=>tx('readwrite',s=>s.delete(k));
+const fGet=k=>db().then(d=>new Promise((res,rej)=>{ const r=d.transaction('fotos').objectStore('fotos').get(k); r.onsuccess=()=>res(r.result||null); r.onerror=()=>rej(r.error); }));
+const fKeys=()=>db().then(d=>new Promise((res,rej)=>{ const r=d.transaction('fotos').objectStore('fotos').getAllKeys(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }));
+const urlCache=new Map();
+async function fotoUrl(k){ if(urlCache.has(k)) return urlCache.get(k);
+  const b=await fGet(k).catch(()=>null); if(!b) return null;
+  const u=URL.createObjectURL(b); urlCache.set(k,u); return u; }
+function dropUrl(k){ const u=urlCache.get(k); if(u){URL.revokeObjectURL(u);urlCache.delete(k);} }
+
+async function redimensionar(file,max,q){
+  let bmp;
+  try{ bmp=await createImageBitmap(file,{imageOrientation:'from-image'}); }
+  catch(e){
+    bmp=await new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=URL.createObjectURL(file); });
+  }
+  const w=bmp.width||bmp.naturalWidth, h=bmp.height||bmp.naturalHeight;
+  const r=Math.min(1,max/Math.max(w,h));
+  const cv=document.createElement('canvas'); cv.width=Math.round(w*r); cv.height=Math.round(h*r);
+  cv.getContext('2d').drawImage(bmp,0,0,cv.width,cv.height);
+  return new Promise(res=>cv.toBlob(b=>res(b),'image/jpeg',q));
+}
+async function salvarFoto(id,slot,file){
+  toast('Salvando foto…');
+  try{
+    const full=await redimensionar(file,1400,.85);
+    const th=await redimensionar(file,360,.8);
+    await fPut(`${id}:${slot}`,full); await fPut(`${id}:${slot}:t`,th);
+    dropUrl(`${id}:${slot}`); dropUrl(`${id}:${slot}:t`);
+    setSt(id,{ [slot==='m'?'fm':'fb']:1 });
+    toast('Foto salva ✓');
+  }catch(e){ toast('Erro ao salvar a foto'); console.error(e); }
+  refreshCard(id); if(detailId===id) renderDetail(id);
+}
+async function apagarFotoSlot(id,slot){
+  await fDel(`${id}:${slot}`).catch(()=>{}); await fDel(`${id}:${slot}:t`).catch(()=>{});
+  dropUrl(`${id}:${slot}`); dropUrl(`${id}:${slot}:t`);
+  setSt(id,{ [slot==='m'?'fm':'fb']:0, [slot==='m'?'wm':'wb']:'' });
+  refreshCard(id); if(detailId===id) renderDetail(id);
+}
+
+/* ============ Wiki (Fandom) — roda no navegador do usuário ============ */
+const WIKI='https://hotwheels.fandom.com/api.php';
+let wikiAutoOff=false;
+function tituloWiki(it){
+  for(const c of ['pagina','fonte']){
+    const u=F(it,c);
+    if(u && /fandom\.com\/wiki\//.test(u)){
+      try{ return decodeURIComponent(String(u).split('/wiki/')[1].split('?')[0]).replace(/_/g,' '); }catch(e){}
+    }
+  }
+  return null;
+}
+function urlWikiPagina(it){
+  for(const c of ['pagina','fonte']){ const u=F(it,c); if(u && /fandom\.com\/wiki\//.test(u)) return u; }
+  return null;
+}
+/* capas por casting: busca em lote a imagem principal da página */
+const coverWait={}; let coverT=null;
+function pedirCover(title,img){
+  if(wikiAutoOff||!navigator.onLine) return;
+  if(title in ST.covers){ aplicarCover(title); return; }
+  (coverWait[title] ||= []).push(img);
+  clearTimeout(coverT); coverT=setTimeout(buscarCovers,400);
+}
+async function buscarCovers(){
+  if(wikiAutoOff){ for(const t in coverWait) delete coverWait[t]; return; }
+  const titles=Object.keys(coverWait).filter(t=>!(t in ST.covers)).slice(0,50);
+  if(!titles.length) return;
+  try{
+    const u=`${WIKI}?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=360&titles=${encodeURIComponent(titles.join('|'))}`;
+    const j=await (await fetch(u)).json();
+    const alias={}; for(const n of (j.query?.normalized||[])) alias[n.from]=n.to;
+    for(const r of (j.query?.redirects||[])){ for(const k in alias) if(alias[k]===r.from) alias[k]=r.to; alias[r.from]=r.to; }
+    const byTitle={}; for(const p of Object.values(j.query?.pages||{})) byTitle[p.title]=p.thumbnail?.source||0;
+    for(const t of titles){ const fin=alias[t]||t; ST.covers[t]=byTitle[fin]||0; }
+    save();
+    for(const t of titles) aplicarCover(t);
+  }catch(e){ wikiAutoOff=true; }
+  if(Object.keys(coverWait).some(t=>!(t in ST.covers))) setTimeout(buscarCovers,300);
+}
+function aplicarCover(title){
+  const imgs=coverWait[title]||[]; delete coverWait[title];
+  const src=ST.covers[title];
+  if(!src) return;
+  for(const img of imgs){ if(!img.isConnected||img.classList.contains('ok')) continue;
+    img.src=src; img.onload=()=>img.classList.add('ok'); }
+}
+function wikiFull(src){ return src.replace(/\/scale-to-width-down\/\d+/,''); }
+function wikiThumb(src,w){ const base=wikiFull(src); const m=base.match(/^(.*?\/revision\/latest)(\?.*)?$/); return m? `${m[1]}/scale-to-width-down/${w}${m[2]||''}` : base; }
+
+/* ============ Estado da interface ============ */
+const V={tab:'painel', q:'', st:'', ano:'', tipo:'', rar:'', pri:'', escopo:'', sit:'', foto:'', sort:'plan'};
+let listItems=[], listPos=0, detailId=null;
+
+const TABS=[['painel','Painel'],['todos','Todos'],['bmw','BMW'],['porsche','Porsche'],['ferrari','Ferrari'],['outras','Outras linhas'],['castings','Castings']];
+function renderTabs(){
+  $('#tabs').innerHTML=TABS.map(([k,label])=>{
+    let n='';
+    if(k==='todos') n=`<span class="n">${fmt(ITEMS.length)}</span>`;
+    else if(MARCAS[k]) n=`<span class="n">${fmt(ITEMS.filter(i=>i.mk===k).length)}</span>`;
+    else if(k==='castings') n=`<span class="n">${fmt(DATA.castings.length)}</span>`;
+    return `<button data-tab="${k}" class="${V.tab===k?'on':''}">${label}${n}</button>`;
+  }).join('');
+}
+
+function setTab(k){ V.tab=k; render(); window.scrollTo({top:0}); }
+function limparFiltros(){ Object.assign(V,{st:'',ano:'',tipo:'',rar:'',pri:'',escopo:'',sit:'',foto:''}); }
+
+/* ============ Filtros ============ */
+function escopoItens(){ return V.tab==='todos' ? ITEMS : ITEMS.filter(i=>i.mk===V.tab); }
+const kf=(it,col)=>{ const v=F(it,col); return v==null?'∅':String(v); };
+function opcoes(items,col){
+  const set=new Map();
+  for(const it of items){ const s=kf(it,col); set.set(s,(set.get(s)||0)+1); }
+  return [...set.entries()].sort((a,b)=>a[0].localeCompare(b[0],'pt',{numeric:true}));
+}
+function montarSelect(el,rotulo,pares,val,vazioLabel){
+  el.innerHTML=`<option value="">${rotulo}</option>`+
+    pares.map(([v,n])=>`<option value="${esc(v)}" ${val!==''&&v===val?'selected':''}>${v==='∅'?vazioLabel:esc(v)} (${fmt(n)})</option>`).join('');
+  el.classList.toggle('on',!!val);
+}
+function renderControles(){
+  const items=escopoItens();
+  const c=$('#controls'); c.classList.remove('hide');
+  const stChips=[['','Todos'],['0','Faltam'],['1','A caminho'],['2','Tenho']];
+  const conta=v=>items.filter(i=>String(own(i.id))===v).length;
+  $('#chipsStatus').innerHTML=stChips.map(([v,l])=>
+    `<button class="chip ${V.st===v?'on':''}" data-st="${v}">${l}${v===''?'':` · ${fmt(conta(v))}`}</button>`).join('');
+  montarSelect($('#fAno'),'Ano',opcoes(items,'ano').reverse(),V.ano,'Sem ano');
+  montarSelect($('#fTipo'),'Tipo',opcoes(items,'tipo'),V.tipo,'—');
+  montarSelect($('#fRar'),'Raridade',opcoes(items,'rar'),V.rar,'—');
+  montarSelect($('#fPri'),'Prioridade',opcoes(items,'pri'),V.pri,'—');
+  montarSelect($('#fEscopo'),'Escala/escopo',opcoes(items,'escopo'),V.escopo,'—');
+  montarSelect($('#fSit'),'Situação',opcoes(items,'sit'),V.sit,'—');
+  $('#fFoto').innerHTML=`<option value="">Fotos</option><option value="com" ${V.foto==='com'?'selected':''}>Com foto minha</option><option value="sem" ${V.foto==='sem'?'selected':''}>Sem foto minha</option>`;
+  $('#fFoto').classList.toggle('on',!!V.foto);
+  $('#fSort').innerHTML=[['plan','Ordem da planilha'],['anoDesc','Ano ↓'],['anoAsc','Ano ↑'],['casting','Casting A–Z']]
+    .map(([v,l])=>`<option value="${v}" ${V.sort===v?'selected':''}>${l}</option>`).join('');
+}
+function filtrar(){
+  const toks=nrm(V.q.trim()).split(/\s+/).filter(Boolean);
+  let out=escopoItens().filter(it=>{
+    if(V.st!=='' && String(own(it.id))!==V.st) return false;
+    if(V.ano!=='' && kf(it,'ano')!==V.ano) return false;
+    if(V.tipo && kf(it,'tipo')!==V.tipo) return false;
+    if(V.rar && kf(it,'rar')!==V.rar) return false;
+    if(V.pri && kf(it,'pri')!==V.pri) return false;
+    if(V.escopo && kf(it,'escopo')!==V.escopo) return false;
+    if(V.sit && kf(it,'sit')!==V.sit) return false;
+    if(V.foto){ const s=stOf(it.id); const tem=!!(s.fm||s.fb); if(V.foto==='com'&&!tem) return false; if(V.foto==='sem'&&tem) return false; }
+    if(toks.length && !toks.every(t=>it.hay.includes(t))) return false;
+    return true;
+  });
+  const ano=it=>F(it,'ano')??-1;
+  if(V.sort==='anoDesc') out.sort((a,b)=>ano(b)-ano(a)||a.ord-b.ord);
+  else if(V.sort==='anoAsc') out.sort((a,b)=>ano(a)-ano(b)||a.ord-b.ord);
+  else if(V.sort==='casting') out.sort((a,b)=>String(F(a,'casting')).localeCompare(String(F(b,'casting')),'pt')||a.ord-b.ord);
+  return out;
+}
+
+/* ============ Placeholders (SVG) ============ */
+const PH_CAR=`<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 40h48M10 40v-6c0-2 1-4 4-5l6-2 7-7c1.5-1.5 3-2 5-2h8c4 0 7 2 9 5l4 6h3c2 0 4 2 4 4v7"/><circle cx="20" cy="44" r="5.5"/><circle cx="46" cy="44" r="5.5"/></svg>`;
+const PH_BLISTER=`<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="6" width="36" height="52" rx="4"/><path d="M20 14h24"/><circle cx="32" cy="34" r="11"/><path d="M25 34c2-3 4-4.5 7-4.5s5 1.5 7 4.5"/></svg>`;
+
+/* ============ Cards ============ */
+const PRI_DOT={'1':'var(--crit)','2':'var(--acc)','3':'var(--p3)','F':'var(--mut)'};
+const RAR_DOT={'Comum / atual':'var(--mut)','Incomum':'var(--acc)','Rara':'var(--rara)','Muito rara':'var(--crit)'};
+function priCurta(p){ if(!p) return ''; if(p.startsWith('1'))return'Prioridade 1'; if(p.startsWith('2'))return'Prioridade 2'; if(p.startsWith('3'))return'Prioridade 3'; return 'Fora da meta'; }
+function cardHTML(it){
+  const s=stOf(it.id), o=own(it.id);
+  const serie=[F(it,'serie'),F(it,'nserie')&&`nº ${F(it,'nserie')}`,F(it,'ncol')&&`col. ${F(it,'ncol')}`].filter(Boolean).join(' · ');
+  const cor=F(it,'cor'), toy=F(it,'toy');
+  const pri=F(it,'pri')||'', rar=F(it,'rar')||'', excl=F(it,'excl');
+  return `<article class="card ${o===2?'tenho':o===1?'caminho':''}" data-id="${it.id}">
+    <div class="thumb"><img alt="">${PH_CAR}</div>
+    <div class="c-main">
+      <div class="c-top"><h3>${esc(F(it,'casting')||'—')}</h3><span class="ano">${F(it,'ano')??'—'}</span></div>
+      ${serie?`<div class="c-sub">${esc(serie)}</div>`:''}
+      <div class="c-cor">${cor?`<b>${esc(cor)}</b>`:''}${cor&&toy?' — ':''}${toy?`<span class="toy">${esc(toy)}</span>`:''}</div>
+      <div class="badges">
+        ${F(it,'tipo')?`<span class="bdg">${esc(F(it,'tipo'))}</span>`:''}
+        ${rar?`<span class="bdg"><i class="dot" style="background:${RAR_DOT[rar]||'var(--mut)'}"></i>${esc(rar)}</span>`:''}
+        ${pri?`<span class="bdg"><i class="dot" style="background:${PRI_DOT[pri[0]]||'var(--mut)'}"></i>${esc(priCurta(pri))}</span>`:''}
+        ${excl?`<span class="bdg excl">★ ${esc(excl)}</span>`:''}
+      </div>
+    </div>
+    <div class="ownseg" role="group" aria-label="Status do item">
+      <button class="o0" data-own="0" aria-pressed="${o===0}">✗ Falta</button>
+      <button class="o1" data-own="1" aria-pressed="${o===1}">🚚 A caminho</button>
+      <button class="o2" data-own="2" aria-pressed="${o===2}">✓ Tenho</button>
+    </div>
+  </article>`;
+}
+async function hidratarThumb(card,it){
+  const img=card.querySelector('.thumb img'); if(!img) return;
+  const s=stOf(it.id);
+  let src=null;
+  if(s.fm) src=await fotoUrl(`${it.id}:m:t`);
+  if(!src&&s.fb) src=await fotoUrl(`${it.id}:b:t`);
+  if(!src&&s.wm) src=wikiThumb(s.wm,240);
+  if(!src&&s.wb) src=wikiThumb(s.wb,240);
+  if(!src){
+    const t=tituloWiki(it);
+    if(t){ if(ST.covers[t]) src=ST.covers[t]; else if(!(t in ST.covers)){ pedirCover(t,img); } }
+  }
+  if(src){ img.src=src; img.onload=()=>img.classList.add('ok'); img.onerror=()=>img.classList.remove('ok'); }
+}
+function refreshCard(id){
+  const card=$('#content').querySelector(`.card[data-id="${id}"]`); if(!card) return;
+  const it=BYID[id]; const novo=document.createElement('div'); novo.innerHTML=cardHTML(it);
+  const el=novo.firstElementChild; card.replaceWith(el); hidratarThumb(el,it);
+}
+
+/* ============ Render principal ============ */
+function render(){
+  renderTabs();
+  const content=$('#content');
+  $('#controls').classList.add('hide'); $('#resumo').classList.add('hide');
+  $('#sentinel').classList.add('hide');
+  if(V.tab==='painel'){ $('#subtitle').textContent=DATA.titulo; renderPainel(); return; }
+  if(V.tab==='castings'){ $('#subtitle').textContent='Um card por molde. Toque para ver todas as versões dele.'; renderCastings(); return; }
+  const m=DATA.marcas.find(x=>x.key===V.tab);
+  $('#subtitle').textContent=m?m.desc:'Todas as marcas em uma lista só.';
+  renderControles();
+  listItems=filtrar(); listPos=0;
+  content.innerHTML='<div class="grid" id="lista"></div>';
+  $('#resumo').classList.remove('hide');
+  const tenho=listItems.filter(i=>own(i.id)===2).length;
+  $('#resumo').textContent=`${fmt(listItems.length)} ${listItems.length===1?'item':'itens'} · ${fmt(tenho)} na coleção`;
+  if(!listItems.length){ content.innerHTML='<p class="vazio">Nada encontrado com esses filtros.<br>Tente limpar a busca ou os filtros.</p>'; return; }
+  $('#sentinel').classList.remove('hide');
+  maisCards();
+}
+function maisCards(){
+  if(V.tab==='painel'||V.tab==='castings') return;
+  const lista=$('#lista'); if(!lista) return;
+  const fim=Math.min(listPos+60,listItems.length);
+  if(listPos>=fim) return;
+  const tmp=document.createElement('div');
+  tmp.innerHTML=listItems.slice(listPos,fim).map(cardHTML).join('');
+  const novos=[...tmp.children];
+  const frag=document.createDocumentFragment(); novos.forEach(n=>frag.appendChild(n));
+  lista.appendChild(frag);
+  novos.forEach(n=>hidratarThumb(n,BYID[n.dataset.id]));
+  listPos=fim;
+  if(listPos>=listItems.length) $('#sentinel').classList.add('hide');
+}
+new IntersectionObserver(es=>{ if(es[0].isIntersecting) maisCards(); },{rootMargin:'900px'}).observe($('#sentinel'));
+
+/* ============ Painel ============ */
+function statsDe(items){
+  let t=0,c=0; for(const it of items){ const o=own(it.id); if(o===2)t++; else if(o===1)c++; }
+  return {total:items.length,tenho:t,caminho:c,faltam:items.length-t-c};
+}
+function meterHTML(s){
+  const p1=s.total?100*s.tenho/s.total:0, p2=s.total?100*s.caminho/s.total:0;
+  return `<div class="meter" role="img" aria-label="${s.tenho} tenho, ${s.caminho} a caminho, ${s.faltam} faltam">
+    ${p1>0?`<i class="m1" style="width:${p1}%"></i>`:''}${p2>0?`<i class="m2" style="width:${p2}%"></i>`:''}</div>`;
+}
+function renderPainel(){
+  const g=statsDe(ITEMS);
+  const pct=g.total? (100*g.tenho/g.total) : 0;
+  const p1falta=ITEMS.filter(i=>String(F(i,'pri')||'').startsWith('1')&&own(i.id)!==2);
+  const novidades=ITEMS.filter(i=>String(F(i,'sit')||'').startsWith('2026'));
+  const caminho=ITEMS.filter(i=>own(i.id)===1);
+  const comFoto=ITEMS.filter(i=>{const s=stOf(i.id);return s.fm||s.fb;});
+  const tiles=DATA.marcas.map(m=>{
+    const items=ITEMS.filter(i=>i.mk===m.key);
+    const s=statsDe(items);
+    const p1=items.filter(i=>String(F(i,'pri')||'').startsWith('1')&&own(i.id)!==2).length;
+    return `<button class="tile" data-goto="${m.key}">
+      <h3>${MARCAS[m.key]}</h3>
+      <div class="val">${fmt(s.tenho)}<small> / ${fmt(s.total)}</small></div>
+      ${meterHTML(s)}
+      <div class="leg"><span><i style="background:var(--meter-fill)"></i>Tenho ${fmt(s.tenho)}</span><span><i style="background:var(--meter-mid)"></i>A caminho ${fmt(s.caminho)}</span><span><i style="background:var(--meter-track)"></i>Faltam ${fmt(s.faltam)}</span></div>
+      ${p1?`<div class="p1chip">⚑ ${fmt(p1)} de prioridade 1 em falta</div>`:''}
+    </button>`;
+  }).join('');
+  $('#content').innerHTML=`
+    <div class="hero"><div class="big">${pct.toLocaleString('pt-BR',{maximumFractionDigits:1})}%</div>
+      <div class="sub">da coleção completa — <b>${fmt(g.tenho)}</b> de <b>${fmt(g.total)}</b> miniaturas${g.caminho?` · ${fmt(g.caminho)} a caminho`:''}</div></div>
+    <div class="tiles">${tiles}</div>
+    <div class="atalhos">
+      <button class="atalho" data-atalho="p1">⚑ Prioridade 1 em falta<small>${fmt(p1falta.length)} itens para caçar primeiro</small></button>
+      <button class="atalho" data-atalho="caminho">🚚 A caminho<small>${fmt(caminho.length)} itens comprados</small></button>
+      <button class="atalho" data-atalho="novidades">✨ Novidades 2026<small>${fmt(novidades.length)} lançamentos listados</small></button>
+      <button class="atalho" data-atalho="fotos">📷 Com minha foto<small>${fmt(comFoto.length)} itens fotografados</small></button>
+    </div>
+    <div class="painel-acoes">
+      <button class="btn pri" id="btnExport">⬇ Exportar backup</button>
+      <button class="btn" id="btnImport">⬆ Importar backup</button>
+      <button class="btn" id="btnPrint">🖨 Imprimir lista</button>
+    </div>
+    <p class="nota-rodape">${esc(DATA.nota)}<br>Marcações, notas e fotos ficam salvas só neste navegador — use o backup para levar para outro aparelho. Imagens de referência vêm da Hot Wheels Wiki (Fandom) quando você está online.</p>`;
+}
+
+/* ============ Castings ============ */
+function renderCastings(){
+  const toks=nrm(V.q.trim()).split(/\s+/).filter(Boolean);
+  const rows=DATA.castings.filter(r=>{ if(!toks.length) return true; const h=nrm(r.join(' ')); return toks.every(t=>h.includes(t)); });
+  $('#resumo').classList.remove('hide');
+  $('#resumo').textContent=`${fmt(rows.length)} castings`;
+  $('#content').innerHTML='<div class="grid">'+rows.map(r=>{
+    const [marca,casting,escopo,a1,a2,vers,princ,paral,pri,pag]=r;
+    const meus=porCasting[nrm(casting||'')]||[];
+    const s=statsDe(meus);
+    return `<button class="cast-card" data-casting="${esc(casting)}">
+      <h3>${esc(casting)}</h3>
+      <div class="meta">${esc(marca)} · ${a1??'?'}–${a2??'?'} · ${esc(escopo||'')}</div>
+      <div class="meta">${fmt(vers||0)} versões documentadas${paral?` (+${fmt(paral)} paralelas)`:''}</div>
+      ${meterHTML(s)}
+      <div class="prog">${fmt(s.tenho)} de ${fmt(s.total)} na coleção</div>
+    </button>`;
+  }).join('')+'</div>';
+}
+
+/* ============ Detalhe ============ */
+function slotHTML(it,slot,rotulo,ph){
+  const s=stOf(it.id);
+  const temFoto=slot==='m'?s.fm:s.fb;
+  const wiki=slot==='m'?s.wm:s.wb;
+  return `<div class="slot" data-slot="${slot}">
+    <h4>${rotulo}</h4>
+    <div class="img" data-zoom="${slot}"><img alt="${rotulo}">${ph}<span class="tag"></span></div>
+    <div class="acts">
+      <button data-foto="${slot}">📷 ${temFoto?'Trocar foto':'Minha foto'}</button>
+      <button data-wiki="${slot}">🌐 Wiki</button>
+      ${(temFoto||wiki)?`<button data-del="${slot}">🗑</button>`:''}
+    </div>
+  </div>`;
+}
+async function hidratarSlot(root,it,slot){
+  const s=stOf(it.id);
+  const box=root.querySelector(`.slot[data-slot="${slot}"]`); if(!box) return;
+  const img=box.querySelector('img'), tag=box.querySelector('.tag');
+  const temFoto=slot==='m'?s.fm:s.fb, wiki=slot==='m'?s.wm:s.wb;
+  let src=null, origem='';
+  if(temFoto){ src=await fotoUrl(`${it.id}:${slot}`); origem='minha foto'; }
+  if(!src&&wiki){ src=wikiThumb(wiki,700); origem='wiki'; }
+  if(!src&&slot==='m'){ const t=tituloWiki(it); if(t&&ST.covers[t]){ src=ST.covers[t]; origem='wiki (casting)'; } }
+  if(src){ img.src=src; img.onload=()=>{img.classList.add('ok')}; tag.textContent=origem; tag.style.display='block'; }
+}
+function renderDetail(id){
+  const it=BYID[id]; if(!it) return;
+  detailId=id;
+  const s=stOf(id), o=own(id);
+  $('#dTitle').textContent=`${F(it,'casting')||'—'} · ${F(it,'ano')??'s/ ano'}`;
+  const linhas=DATA.cols.map((c,i)=>{
+    if(c==='own'||c==='fonte'||c==='pagina') return '';
+    const v=it.v[i]; if(v==null||v==='') return '';
+    return `<dt>${esc(DATA.rotulos[i])}</dt><dd>${esc(v)}</dd>`;
+  }).join('');
+  const fonte=F(it,'fonte'), pagina=F(it,'pagina');
+  const links=[pagina&&`<a href="${esc(pagina)}" target="_blank" rel="noopener">Página do casting na wiki ↗</a>`,
+               fonte&&fonte!==pagina&&`<a href="${esc(fonte)}" target="_blank" rel="noopener">Fonte da versão ↗</a>`].filter(Boolean).join(' · ');
+  const idx=listItems.findIndex(x=>x.id===id);
+  $('#dBody').innerHTML=`
+    <div class="fotos">${slotHTML(it,'m','Miniatura (solta)',PH_CAR)}${slotHTML(it,'b','No blister',PH_BLISTER)}</div>
+    <div class="det-own"><div class="ownseg" role="group" aria-label="Status do item">
+      <button class="o0" data-own="0" aria-pressed="${o===0}">✗ Falta</button>
+      <button class="o1" data-own="1" aria-pressed="${o===1}">🚚 A caminho</button>
+      <button class="o2" data-own="2" aria-pressed="${o===2}">✓ Tenho</button>
+    </div></div>
+    <div class="det-badges">
+      <span class="bdg">${esc(MARCAS[it.mk])}</span>
+      ${F(it,'tipo')?`<span class="bdg">${esc(F(it,'tipo'))}</span>`:''}
+      ${F(it,'rar')?`<span class="bdg"><i class="dot" style="background:${RAR_DOT[F(it,'rar')]||'var(--mut)'}"></i>${esc(F(it,'rar'))}</span>`:''}
+      ${F(it,'pri')?`<span class="bdg"><i class="dot" style="background:${PRI_DOT[String(F(it,'pri'))[0]]||'var(--mut)'}"></i>${esc(F(it,'pri'))}</span>`:''}
+    </div>
+    <dl>${linhas}</dl>
+    ${links?`<p>${links}</p>`:''}
+    <div class="nota-box"><h4 style="margin:0 0 5px;font-size:13px">Minha nota</h4>
+      <textarea id="dNota" placeholder="Onde comprei, preço, estado, com quem está…">${esc(s.n||'')}</textarea></div>
+    <div class="det-nav">
+      <button class="btn" id="dPrev" ${idx>0?'':'disabled'}>‹ Anterior</button>
+      <button class="btn" id="dNext" ${idx>=0&&idx<listItems.length-1?'':'disabled'}>Próximo ›</button>
+    </div>`;
+  hidratarSlot($('#dBody'),it,'m'); hidratarSlot($('#dBody'),it,'b');
+  abrir('mDetail');
+  $('#dNota').addEventListener('input',e=>{ setSt(id,{n:e.target.value.trim()}); });
+  $('#dPrev').onclick=()=>{ if(idx>0) renderDetail(listItems[idx-1].id); };
+  $('#dNext').onclick=()=>{ if(idx<listItems.length-1) renderDetail(listItems[idx+1].id); };
+}
+
+/* ============ Wiki picker ============ */
+async function abrirWiki(it,slotPreferido){
+  const t=tituloWiki(it);
+  $('#wTitle').textContent=`Wiki: ${F(it,'casting')||''}`;
+  $('#wGrid').innerHTML='';
+  abrir('mWiki');
+  if(!t){
+    $('#wStatus').innerHTML='Este item não tem página conhecida na Hot Wheels Wiki. Use 📷 para tirar sua própria foto.';
+    return;
+  }
+  $('#wStatus').textContent='Buscando imagens na Hot Wheels Wiki…';
+  let html='';
+  try{
+    const u=`${WIKI}?action=parse&format=json&origin=*&redirects=1&prop=text&page=${encodeURIComponent(t)}`;
+    const j=await (await fetch(u)).json();
+    html=j.parse?.text?.['*']||'';
+    if(!html) throw new Error(j.error?.info||'sem conteúdo');
+  }catch(e){
+    const pg=urlWikiPagina(it);
+    $('#wStatus').innerHTML=`Não consegui acessar a wiki agora (você está online?). ${pg?`<a href="${esc(pg)}" target="_blank" rel="noopener">Abrir a página no navegador ↗</a>`:''}`;
+    return;
+  }
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const toy=nrm(String(F(it,'toy')||'').trim());
+  const cor=nrm(String(F(it,'cor')||'').trim());
+  const vistos=new Set(); const cands=[];
+  for(const tr of doc.querySelectorAll('table tr')){
+    const imgs=tr.querySelectorAll('img'); if(!imgs.length) continue;
+    const txt=nrm(tr.textContent||'');
+    let nivel=0;
+    if(toy&&toy.length>=4&&txt.includes(toy)) nivel=2;
+    else if(cor&&cor.length>=3&&txt.includes(cor)) nivel=1;
+    for(const im of imgs){
+      let src=im.getAttribute('data-src')||im.getAttribute('src')||'';
+      if(!/static\.wikia/.test(src)||/\.svg/i.test(src)) continue;
+      const full=wikiFull(src.split('/scale-to-width-down')[0].replace(/\/smart\/.*$/,''));
+      if(vistos.has(full)) continue; vistos.add(full);
+      const cells=[...tr.children].map(td=>td.textContent.trim()).filter(x=>x&&x.length<60);
+      cands.push({src:full,cap:cells.slice(0,6).join(' · ').slice(0,140),nivel});
+    }
+  }
+  for(const im of doc.querySelectorAll('img')){
+    let src=im.getAttribute('data-src')||im.getAttribute('src')||'';
+    if(!/static\.wikia/.test(src)||/\.svg/i.test(src)) continue;
+    const full=wikiFull(src.split('/scale-to-width-down')[0].replace(/\/smart\/.*$/,''));
+    if(vistos.has(full)) continue; vistos.add(full);
+    cands.push({src:full,cap:im.getAttribute('alt')||'',nivel:0});
+  }
+  cands.sort((a,b)=>b.nivel-a.nivel);
+  if(!cands.length){
+    const pg=urlWikiPagina(it);
+    $('#wStatus').innerHTML=`A página não tem imagens que eu consiga ler. ${pg?`<a href="${esc(pg)}" target="_blank" rel="noopener">Abrir na wiki ↗</a>`:''}`;
+    return;
+  }
+  const nMatch=cands.filter(c=>c.nivel===2).length;
+  $('#wStatus').innerHTML=`${fmt(cands.length)} imagens encontradas${nMatch?` — <b style="color:var(--good-txt)">${nMatch} na linha com o mesmo Toy # (${esc(F(it,'toy'))})</b>`:''}. Toque em <b>Miniatura</b> ou <b>Blister</b> para usar a imagem no card.`;
+  $('#wGrid').innerHTML=cands.slice(0,80).map((c,i)=>`
+    <figure class="wk-item ${c.nivel===2?'match':''}" style="margin:0">
+      ${c.nivel===2?'<div class="m-tag">✓ Toy # confere</div>':(c.nivel===1?'<div class="m-tag" style="color:var(--acc)">≈ cor parecida</div>':'')}
+      <div class="wi" data-wz="${i}"><img loading="lazy" src="${esc(wikiThumb(c.src,300))}" alt=""></div>
+      <figcaption>${esc(c.cap)}</figcaption>
+      <div class="acts"><button data-usar="m" data-i="${i}">Miniatura</button><button data-usar="b" data-i="${i}">Blister</button></div>
+    </figure>`).join('');
+  $('#wGrid').dataset.itemId=it.id;
+  window._wkCands=cands;
+}
+
+/* ============ Backup ============ */
+function baixar(nome,blob){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nome;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);
+}
+const b64=blob=>new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.readAsDataURL(blob); });
+async function exportarBackup(){
+  toast('Montando backup…');
+  const fotos=[];
+  try{
+    const keys=await fKeys();
+    for(const k of keys){
+      if(String(k).endsWith(':t')) continue; /* miniaturas são regeradas na importação */
+      const blob=await fGet(k);
+      if(blob) fotos.push({k,tipo:blob.type||'image/jpeg',b64:await b64(blob)});
+    }
+  }catch(e){}
+  const payload={app:'hwc',v:1,quando:new Date().toISOString(),estado:ST,fotos};
+  baixar(`hotwheels-backup-${new Date().toISOString().slice(0,10)}.json`,
+    new Blob([JSON.stringify(payload)],{type:'application/json'}));
+  toast(`Backup gerado: ${fmt(Object.keys(ST.it).length)} itens marcados, ${fmt(fotos.length)} fotos`);
+}
+async function importarBackup(file){
+  try{
+    const j=JSON.parse(await file.text());
+    if(j.app!=='hwc') throw new Error('formato');
+    Object.assign(ST.it,j.estado?.it||{});
+    Object.assign(ST.covers,j.estado?.covers||{});
+    save();
+    let n=0;
+    for(const f of (j.fotos||[])){
+      const bin=atob(f.b64); const arr=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+      const blob=new Blob([arr],{type:f.tipo||'image/jpeg'});
+      await fPut(f.k,blob);
+      const th=await redimensionar(blob,360,.8).catch(()=>null);
+      if(th) await fPut(`${f.k}:t`,th);
+      dropUrl(f.k); dropUrl(`${f.k}:t`); n++;
+    }
+    toast(`Backup importado ✓ (${fmt(n)} fotos)`);
+    render();
+  }catch(e){ toast('Arquivo de backup inválido'); console.error(e); }
+}
+
+/* ============ Ajuda ============ */
+function renderHelp(){
+  const guia=DATA.guia.map(([t,c])=>`<tr><td>${esc(t||'')}</td><td>${esc(c||'')}</td></tr>`).join('');
+  const fontes=DATA.fontes.map(([f,u,url])=>`<tr><td>${url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(f||'')}</a>`:esc(f||'')}</td><td>${esc(u||'')}</td></tr>`).join('');
+  $('#hBody').innerHTML=`
+    <h3>Como usar</h3>
+    <ul>
+      <li><b>✓ Tenho / 🚚 A caminho / ✗ Falta</b> — toque direto no card. Tudo fica salvo automaticamente neste navegador.</li>
+      <li><b>Fotos</b> — abra um item e use <b>📷</b> para fotografar a <b>miniatura solta</b> e o <b>blister</b> (no celular abre a câmera). Use <b>🌐 Wiki</b> para escolher uma foto de referência da Hot Wheels Wiki — quando a linha da tabela tem o mesmo Toy #, ela aparece marcada com <b>✓</b>.</li>
+      <li><b>Busca e filtros</b> — a busca cobre casting, modelo, série, cor, Toy #, tampo e notas. Os filtros mostram a contagem de cada opção.</li>
+      <li><b>Backup</b> — no Painel, exporte um arquivo .json com marcações, notas e fotos; importe no outro aparelho. Sem backup, os dados vivem só neste navegador.</li>
+      <li><b>Capas automáticas</b> — online, o app busca a foto principal de cada casting na wiki para os cards ainda sem foto.</li>
+    </ul>
+    <h3>Critérios da pesquisa</h3>
+    <table class="help-tab">${guia}</table>
+    <h3>Fontes</h3>
+    <table class="help-tab">${fontes}</table>
+    <p style="margin-top:14px">${esc(DATA.nota)} · App gerado em ${DATA.geradoEm.split('-').reverse().join('/')}.</p>`;
+  abrir('mHelp');
+}
+
+/* ============ Modais / eventos ============ */
+function abrir(id){ $('#'+id).classList.add('open'); document.body.style.overflow='hidden'; }
+function fechar(id){ $('#'+id).classList.remove('open');
+  if(!document.querySelector('.modal.open')) document.body.style.overflow=''; }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const m=[...document.querySelectorAll('.modal.open')].pop(); if(m) fechar(m.id); } });
+let toastT=null;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+
+document.addEventListener('click',e=>{
+  const el=e.target;
+  const closeBtn=el.closest('[data-close]'); if(closeBtn){ fechar(closeBtn.dataset.close); return; }
+  if(el.closest('#mZoom')){ fechar('mZoom'); return; }
+  const modal=el.classList&&el.classList.contains('modal')?el:null; if(modal){ fechar(modal.id); return; }
+
+  const tab=el.closest('[data-tab]'); if(tab){ setTab(tab.dataset.tab); return; }
+  if(el.closest('#btnHelp')){ renderHelp(); return; }
+  const chip=el.closest('[data-st]'); if(chip){ V.st=chip.dataset.st; render(); return; }
+  if(el.closest('#btnLimpar')){ limparFiltros(); $('#q').value=''; V.q=''; render(); return; }
+
+  const goto=el.closest('[data-goto]'); if(goto){ limparFiltros(); V.tab=goto.dataset.goto; render(); window.scrollTo({top:0}); return; }
+  const atalho=el.closest('[data-atalho]');
+  if(atalho){
+    limparFiltros(); $('#q').value=''; V.q=''; V.tab='todos';
+    const a=atalho.dataset.atalho;
+    if(a==='p1'){ V.pri='1 — Comprar agora'; V.st='0'; }
+    if(a==='caminho'){ V.st='1'; }
+    if(a==='novidades'){ V.sit='2026 — listado; confirmar disponibilidade'; }
+    if(a==='fotos'){ V.foto='com'; }
+    render(); window.scrollTo({top:0}); return;
+  }
+  const cast=el.closest('[data-casting]');
+  if(cast){ limparFiltros(); V.tab='todos'; V.q=cast.dataset.casting; $('#q').value=V.q; render(); window.scrollTo({top:0}); return; }
+
+  if(el.closest('#btnExport')){ exportarBackup(); return; }
+  if(el.closest('#btnImport')){ $('#inpImport').click(); return; }
+  if(el.closest('#btnPrint')){ window.print(); return; }
+
+  /* dentro de um card */
+  const ownBtn=el.closest('[data-own]');
+  if(ownBtn){
+    const card=ownBtn.closest('[data-id]');
+    const id=card?card.dataset.id:detailId;
+    if(id){ const novo=+ownBtn.dataset.own;
+      setSt(id,{o:novo});
+      refreshCard(id);
+      if(detailId===id&&$('#mDetail').classList.contains('open')) renderDetail(id);
+      const nomes=['marcado como Falta','marcado como A caminho','adicionado à coleção ✓'];
+      toast(`${F(BYID[id],'casting')} ${nomes[novo]}`);
+    }
+    return;
+  }
+  const card=el.closest('.card[data-id]');
+  if(card&&!el.closest('.ownseg')){ listItems.length||(listItems=filtrar()); renderDetail(card.dataset.id); return; }
+
+  /* detalhe: fotos */
+  const fotoBtn=el.closest('[data-foto]');
+  if(fotoBtn&&detailId){ const inp=$('#inpFoto'); inp.dataset.id=detailId; inp.dataset.slot=fotoBtn.dataset.foto; inp.value=''; inp.click(); return; }
+  const wikiBtn=el.closest('[data-wiki]');
+  if(wikiBtn&&detailId){ abrirWiki(BYID[detailId],wikiBtn.dataset.wiki); return; }
+  const delBtn=el.closest('[data-del]');
+  if(delBtn&&detailId){ if(confirm('Remover a foto deste espaço?')) apagarFotoSlot(detailId,delBtn.dataset.del); return; }
+  const zoomEl=el.closest('[data-zoom]');
+  if(zoomEl&&detailId){
+    const img=zoomEl.querySelector('img');
+    if(img&&img.classList.contains('ok')){ $('#mZoom img').src=img.src; abrir('mZoom'); }
+    return;
+  }
+
+  /* wiki picker */
+  const usar=el.closest('[data-usar]');
+  if(usar){
+    const c=window._wkCands?.[+usar.dataset.i]; const id=$('#wGrid').dataset.itemId;
+    if(c&&id){
+      setSt(id,{ [usar.dataset.usar==='m'?'wm':'wb']:c.src });
+      toast(usar.dataset.usar==='m'?'Imagem definida para a miniatura ✓':'Imagem definida para o blister ✓');
+      fechar('mWiki'); refreshCard(id); if(detailId===id) renderDetail(id);
+    }
+    return;
+  }
+  const wz=el.closest('[data-wz]');
+  if(wz){ const c=window._wkCands?.[+wz.dataset.wz]; if(c){ $('#mZoom img').src=wikiThumb(c.src,1000); abrir('mZoom'); } return; }
+});
+
+$('#inpFoto').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  salvarFoto(e.target.dataset.id,e.target.dataset.slot,f);
+});
+$('#inpImport').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) importarBackup(f); e.target.value=''; });
+
+let qT=null;
+$('#q').addEventListener('input',e=>{ clearTimeout(qT); qT=setTimeout(()=>{ V.q=e.target.value; if(V.tab==='painel') V.tab='todos'; render(); },250); });
+for(const [selId,key] of [['#fAno','ano'],['#fTipo','tipo'],['#fRar','rar'],['#fPri','pri'],['#fEscopo','escopo'],['#fSit','sit'],['#fFoto','foto'],['#fSort','sort']]){
+  $(selId).addEventListener('change',e=>{ V[key]=e.target.value; render(); });
+}
+
+render();
+</script>
+</body>
+</html>
