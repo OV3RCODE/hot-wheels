@@ -334,7 +334,7 @@ const nrm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036
 const fmt = n => n.toLocaleString('pt-BR');
 const $ = s => document.querySelector(s);
 
-const MARCAS = {bmw:'BMW', porsche:'Porsche', ferrari:'Ferrari', outras:'Outras linhas', kool:'Kool Kombi'};
+const MARCAS = {bmw:'BMW', porsche:'Porsche', ferrari:'Ferrari', outras:'Outras linhas', kool:'Kool Kombi', toonedw:'Tooned · da wiki'};
 const ITEMS = [];
 for(const m of DATA.marcas){
   m.itens.forEach((v,i)=>{
@@ -497,42 +497,32 @@ function imgDaWiki(el){
   return wikiFull(s.split('/scale-to-width-down')[0].replace(/\/smart\/.*$/,''));
 }
 
-/* ============ Coleções especiais ============ */
-/* Tooned: castings cartunizados ("Tooned Porsche", "Enzo Ferrari ('Tooned)")
-   e lançamentos da série Tooned, em qualquer marca/coleção da planilha. */
-const eTooned = it => nrm(F(it,'casting')||'').includes('tooned') || nrm(F(it,'serie')||'').includes('tooned');
-
-/* Kool Kombi: não existe na planilha (que cobre só BMW/Porsche/Ferrari),
-   então a lista de versões vem da Hot Wheels Wiki no navegador do usuário. */
-const KOOL_PAGINA='https://hotwheels.fandom.com/wiki/Kool_Kombi';
-let KOOL=[], koolEstado='vazio'; /* vazio | carregando | ok | erro */
-
-function itemKool(r,i,usados){
-  const v=new Array(DATA.cols.length).fill(null);
-  const set=(c,val)=>{ if(val!=null&&val!=='') v[CI[c]]=val; };
-  set('ano',r.ano); set('casting','Kool Kombi'); set('modelo','Kool Kombi');
-  set('serie',r.serie); set('ncol',r.col); set('toy',r.toy); set('cor',r.cor);
-  set('tampo',r.tampo); set('rodas',r.rodas); set('pais',r.pais); set('notas',r.notas);
-  set('pagina',KOOL_PAGINA);
-  /* id estável por ano+toy+cor para as marcações sobreviverem a recarregamentos */
-  const base='kk:'+[r.ano||'?',r.toy||'?',nrm(r.cor||'?')].join(':');
-  let id=base, n=2; while(usados.has(id)) id=`${base}#${n++}`;
-  usados.add(id);
-  const it={id, mk:'kool', ord:i, v, img:r.img||''};
-  it.hay=nrm(['casting','serie','ncol','toy','cor','tampo','rodas','notas','pais','ano']
-    .map(c=>F(it,c)??'').join(' ')+' kool kombi volkswagen vw');
-  return it;
+/* ============ Coleções vindas da wiki ============
+   Alguns recortes que o usuário quer acompanhar não existem na planilha
+   (que cobre só BMW/Porsche/Ferrari). Para esses, a lista de versões é lida
+   da Hot Wheels Wiki no navegador e vira item normal: dá para marcar,
+   fotografar, buscar e entra no backup. */
+function urlWiki(t){ return 'https://hotwheels.fandom.com/wiki/'+encodeURIComponent(String(t).replace(/ /g,'_')); }
+const wikiCache={};
+async function paginaWiki(titulo){
+  if(wikiCache[titulo]) return wikiCache[titulo];
+  const u=`${WIKI}?action=parse&format=json&origin=*&redirects=1&prop=text&page=${encodeURIComponent(titulo)}`;
+  const j=await (await fetch(u)).json();
+  const html=j.parse?.text?.['*'];
+  if(!html) throw new Error(j.error?.info||'sem conteúdo');
+  return wikiCache[titulo]=html;
 }
-function parseKool(html){
+/* Lê as tabelas de versões de uma página de casting/série */
+function linhasVersoes(html){
   const doc=new DOMParser().parseFromString(html,'text/html');
-  const linhas=[], usados=new Set();
+  const linhas=[];
   for(const tab of doc.querySelectorAll('table')){
     const trs=[...tab.querySelectorAll('tr')]; if(trs.length<2) continue;
     const head=[...trs[0].children].map(td=>nrm(td.textContent||''));
     const idx=(...nomes)=>head.findIndex(h=>nomes.some(n=>h.includes(n)));
     const iAno=idx('year','ano'), iToy=idx('toy'), iSerie=idx('series','serie'), iCor=idx('color'),
           iCol=idx('col #','col#','collection'), iTampo=idx('tampo'), iRodas=idx('wheel'),
-          iPais=idx('country'), iNotas=idx('note');
+          iPais=idx('country'), iNotas=idx('note'), iModelo=idx('casting','model');
     if(iAno<0&&iToy<0) continue; /* não é uma tabela de versões */
     for(const tr of trs.slice(1)){
       const tds=[...tr.children]; if(tds.length<2) continue;
@@ -540,22 +530,94 @@ function parseKool(html){
       const ano=parseInt(cel(iAno),10);
       const r={ano:isNaN(ano)?null:ano, toy:cel(iToy), serie:cel(iSerie), cor:cel(iCor),
                col:cel(iCol), tampo:cel(iTampo), rodas:cel(iRodas), pais:cel(iPais),
-               notas:cel(iNotas), img:imgDaWiki(tr.querySelector('img'))};
+               notas:cel(iNotas), modelo:cel(iModelo), img:imgDaWiki(tr.querySelector('img'))};
       if(!r.ano&&!r.toy&&!r.serie&&!r.cor) continue;
       linhas.push(r);
     }
   }
-  return linhas.map((r,i)=>itemKool(r,i,usados));
+  return linhas;
+}
+/* Transforma uma linha da wiki em item igual aos da planilha */
+function itemWiki(pref,casting,titulo,r,i,usados,extraHay){
+  const nome=r.modelo||casting;
+  const v=new Array(DATA.cols.length).fill(null);
+  const set=(c,val)=>{ if(val!=null&&val!=='') v[CI[c]]=val; };
+  set('ano',r.ano); set('casting',nome); set('modelo',nome);
+  set('serie',r.serie); set('ncol',r.col); set('toy',r.toy); set('cor',r.cor);
+  set('tampo',r.tampo); set('rodas',r.rodas); set('pais',r.pais); set('notas',r.notas);
+  set('pagina',urlWiki(titulo));
+  /* id estável por casting+ano+toy+cor para as marcações sobreviverem a recarregamentos */
+  const base=`${pref}:${nrm(nome)}:${r.ano||'?'}:${r.toy||'?'}:${nrm(r.cor||'?')}`;
+  let id=base, n=2; while(usados.has(id)) id=`${base}#${n++}`;
+  usados.add(id);
+  const it={id, mk:pref==='kk'?'kool':'toonedw', ord:i, v, img:r.img||''};
+  it.hay=nrm(['casting','serie','ncol','toy','cor','tampo','rodas','notas','pais','ano']
+    .map(c=>F(it,c)??'').join(' ')+' '+(extraHay||''));
+  return it;
+}
+/* Busca em blocos, registrando os itens para o detalhe funcionar */
+async function itensDePaginas(titulos,pref,extraHay,aoAvancar){
+  const usados=new Set(), itens=[];
+  for(let i=0;i<titulos.length;i+=4){
+    const bloco=await Promise.all(titulos.slice(i,i+4).map(async t=>{
+      try{ return [t,linhasVersoes(await paginaWiki(t))]; }catch(e){ return [t,[]]; }
+    }));
+    for(const [t,linhas] of bloco)
+      for(const r of linhas) itens.push(itemWiki(pref,t,t,r,itens.length,usados,extraHay));
+    if(aoAvancar) aoAvancar(Math.min(i+4,titulos.length),titulos.length,itens);
+  }
+  for(const it of itens) BYID[it.id]=it;
+  return itens;
+}
+
+/* ---- Tooned: os da planilha + todos os castings Tooned da wiki ---- */
+const eTooned = it => nrm(F(it,'casting')||'').includes('tooned') || nrm(F(it,'serie')||'').includes('tooned');
+let TOONED_W=[], toonedEstado='vazio', toonedPasso='';
+async function carregarTooned(){
+  if(toonedEstado==='carregando') return;
+  toonedEstado='carregando'; toonedPasso='procurando os castings Tooned…';
+  try{
+    const u=`${WIKI}?action=query&format=json&origin=*&list=search&srsearch=Tooned&srnamespace=0&srlimit=50`;
+    const j=await (await fetch(u)).json();
+    const titulos=(j.query?.search||[]).map(s=>s.title)
+      .filter(t=>nrm(t).includes('tooned'))       /* só páginas de casting/série Tooned */
+      .filter(t=>!porCasting[nrm(t)])             /* o que já está na planilha não repete */
+      .slice(0,40);
+    if(!titulos.length) throw new Error('nenhum casting Tooned encontrado');
+    TOONED_W=await itensDePaginas(titulos,'tw','tooned',(feitos,total,parciais)=>{
+      toonedPasso=`lendo ${feitos} de ${total} castings da wiki (${parciais.length} versões)…`;
+      if(V.tab==='tooned') $('#subtitle').textContent=subtituloTooned();
+    });
+    toonedEstado='ok';
+  }catch(e){ toonedEstado='erro'; console.error(e); }
+  if(V.tab==='tooned') render(); else renderTabs();
+}
+function subtituloTooned(){
+  const n=ITEMS.filter(eTooned).length;
+  if(toonedEstado==='carregando') return `${fmt(n)} da planilha · ${toonedPasso}`;
+  if(toonedEstado==='erro') return `${fmt(n)} da planilha · não consegui buscar os demais na wiki (precisa de internet).`;
+  return `${fmt(n)} da planilha + ${fmt(TOONED_W.length)} da Hot Wheels Wiki — todo carro em estilo Tooned.`;
+}
+
+/* ---- Kool Kombi: casting Volkswagen, 100% vindo da wiki ---- */
+const KOOL_PAGINA=urlWiki('Kool Kombi');
+let KOOL=[], koolEstado='vazio'; /* vazio | carregando | ok | erro */
+/* a primeira versão da aba usava id sem o nome do casting — não perde marcação */
+function migrarKool(itens){
+  let mudou=false;
+  for(const it of itens){
+    if(Object.keys(stOf(it.id)).length) continue;
+    const antigo='kk:'+it.id.split(':').slice(2).join(':');
+    if(ST.it[antigo]){ ST.it[it.id]=ST.it[antigo]; delete ST.it[antigo]; mudou=true; }
+  }
+  if(mudou) save();
 }
 async function carregarKool(){
   if(koolEstado==='carregando') return;
   koolEstado='carregando';
   try{
-    const u=`${WIKI}?action=parse&format=json&origin=*&redirects=1&prop=text&page=${encodeURIComponent('Kool Kombi')}`;
-    const j=await (await fetch(u)).json();
-    const html=j.parse?.text?.['*']; if(!html) throw new Error(j.error?.info||'sem conteúdo');
-    KOOL=parseKool(html);
-    for(const it of KOOL) BYID[it.id]=it;
+    KOOL=await itensDePaginas(['Kool Kombi'],'kk','kool kombi volkswagen vw');
+    migrarKool(KOOL);
     koolEstado=KOOL.length?'ok':'erro';
   }catch(e){ koolEstado='erro'; console.error(e); }
   if(V.tab==='kool') render(); else renderTabs();
@@ -568,7 +630,7 @@ let listItems=[], listPos=0, detailId=null;
 const TABS=[['painel','Painel'],['todos','Todos'],['bmw','BMW'],['porsche','Porsche'],['ferrari','Ferrari'],['outras','Outras linhas'],['tooned','Tooned'],['kool','Kool Kombi'],['castings','Castings']];
 function contaTab(k){
   if(k==='todos') return ITEMS.length;
-  if(k==='tooned') return ITEMS.filter(eTooned).length;
+  if(k==='tooned') return ITEMS.filter(eTooned).length+TOONED_W.length;
   if(k==='kool') return KOOL.length||null;
   if(k==='castings') return DATA.castings.length;
   if(MARCAS[k]) return ITEMS.filter(i=>i.mk===k).length;
@@ -587,7 +649,7 @@ function limparFiltros(){ Object.assign(V,{st:'',ano:'',tipo:'',rar:'',pri:'',es
 /* ============ Filtros ============ */
 function escopoItens(){
   if(V.tab==='todos') return ITEMS;
-  if(V.tab==='tooned') return ITEMS.filter(eTooned);
+  if(V.tab==='tooned') return ITEMS.filter(eTooned).concat(TOONED_W);
   if(V.tab==='kool') return KOOL;
   return ITEMS.filter(i=>i.mk===V.tab);
 }
@@ -721,9 +783,10 @@ function render(){
       : '<p class="vazio load">Buscando as versões da Kool Kombi na Hot Wheels Wiki…</p>';
     return;
   }
+  if(V.tab==='tooned'&&toonedEstado==='vazio') carregarTooned();
   const m=DATA.marcas.find(x=>x.key===V.tab);
   $('#subtitle').textContent = m ? m.desc
-    : V.tab==='tooned' ? 'Versões cartunizadas: castings "Tooned" e lançamentos da série Tooned, em todas as coleções da planilha.'
+    : V.tab==='tooned' ? subtituloTooned()
     : V.tab==='kool' ? `${fmt(KOOL.length)} versões listadas na Hot Wheels Wiki — marque as suas normalmente.`
     : 'Todas as marcas em uma lista só.';
   renderControles();
@@ -1013,8 +1076,9 @@ function renderHelp(){
       <li><b>Fotos</b> — abra um item e use <b>📷</b> para fotografar a <b>miniatura solta</b> e o <b>blister</b> (no celular abre a câmera). Use <b>🌐 Wiki</b> para escolher uma foto de referência da Hot Wheels Wiki — quando a linha da tabela tem o mesmo Toy #, ela aparece marcada com <b>✓</b>.</li>
       <li><b>Busca e filtros</b> — a busca cobre casting, modelo, série, cor, Toy #, tampo e notas. Os filtros mostram a contagem de cada opção.</li>
       <li><b>Backup</b> — no Painel, exporte um arquivo .json com marcações, notas e fotos; importe no outro aparelho. Sem backup, os dados vivem só neste navegador.</li>
-      <li><b>Aba Tooned</b> — reúne as versões cartunizadas da planilha: castings com "Tooned" no nome e os lançamentos da série Tooned, de qualquer marca ou coleção.</li>
-      <li><b>Aba Kool Kombi</b> — esse casting é Volkswagen e não está na planilha (que cobre BMW, Porsche e Ferrari), então a lista de versões é buscada na Hot Wheels Wiki quando você abre a aba, com internet. As marcações e fotos que você fizer nela ficam salvas e entram no backup normalmente.</li>
+      <li><b>Aba Tooned</b> — todo carro em estilo Tooned, de qualquer marca. Junta o que já está na planilha (castings com "Tooned" no nome e os lançamentos da série Tooned) com <b>todos os demais castings Tooned da Hot Wheels Wiki</b>, buscados quando você abre a aba, com internet.</li>
+      <li><b>Aba Kool Kombi</b> — esse casting é Volkswagen e não está na planilha (que cobre BMW, Porsche e Ferrari), então a lista de versões vem da Hot Wheels Wiki, também ao abrir a aba.</li>
+      <li>Nas duas abas, o que vem da wiki funciona como qualquer item: dá para marcar, fotografar, anotar e tudo entra no backup. Sem internet, aparece só o que é da planilha.</li>
       <li><b>Capas automáticas</b> — online, o app busca uma foto <b>na cartela/blister</b> de cada casting na wiki para os cards ainda sem foto (se a página não tiver foto de cartela, usa a foto principal).</li>
     </ul>
     <h3>Critérios da pesquisa</h3>
