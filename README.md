@@ -32,12 +32,16 @@ pesquisa fechada em 15/08/2026).
   status, ano, tipo, raridade, prioridade, escala/escopo, situação e com/sem foto.
 - **Castings**: um card por molde com o range de anos, total de versões e seu progresso — toque
   para ver todas as versões daquele molde.
-- **Tooned**: aba com as versões cartunizadas da planilha — castings com "Tooned" no nome
-  (`Tooned Porsche`, `Enzo Ferrari ('Tooned)`, `Ferrari 360 Modena ('Tooned)`) e os lançamentos
-  da série Tooned, de qualquer marca ou coleção.
-- **Kool Kombi**: aba com todas as versões desse casting. Como ele é Volkswagen e a planilha cobre
-  só BMW/Porsche/Ferrari, a lista é buscada na Hot Wheels Wiki quando a aba é aberta (precisa de
-  internet); as marcações e fotos feitas nela são salvas e entram no backup como as demais.
+- **Tooned**: todo carro em estilo Tooned, de qualquer marca. Soma o que já existe na planilha
+  (castings com "Tooned" no nome e os lançamentos da série Tooned) com **todos os outros castings
+  Tooned da Hot Wheels Wiki**, buscados ao abrir a aba.
+- **Kool Kombi**: todas as versões desse casting. Como ele é Volkswagen e a planilha cobre só
+  BMW/Porsche/Ferrari, a lista vem inteira da Hot Wheels Wiki.
+
+  Nas duas abas o conteúdo da wiki é lido no navegador (precisa de internet) e vira item normal:
+  dá para marcar, fotografar, anotar e tudo entra no backup. As marcações são presas ao
+  casting + ano + Toy # + cor, então sobrevivem a recarregamentos. Offline, a aba Tooned mostra
+  só o que é da planilha e a Kool Kombi explica que precisa de conexão.
 - **Detalhe completo** de cada item com todos os campos da planilha, links para as fontes e
   campo de **nota pessoal** (onde comprou, preço, estado…).
 - **Backup**: exporte um `.json` com marcações, notas e fotos; importe em outro aparelho.
