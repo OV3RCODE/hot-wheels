@@ -53,10 +53,13 @@
     <circle r="16" fill="#2b2b31"/>
   </g>
 
-  <!-- nome do app -->
-  <g font-family="'Arial Black','Arial',sans-serif" font-weight="900" font-style="italic" text-anchor="middle">
-    <text x="256" y="386" font-size="58" fill="#ffffff" letter-spacing="1">COLEÇÃO</text>
-    <text x="256" y="448" font-size="58" fill="#ffd400" letter-spacing="1">PESSOAL</text>
+  <!-- tarja branca com o apelido -->
+  <g transform="rotate(-4 256 352)">
+    <rect x="2" y="314" width="508" height="76" rx="12" fill="#ffffff"/>
+    <rect x="2" y="314" width="508" height="76" rx="12" fill="none" stroke="#e2211c" stroke-width="6"/>
+    <text x="256" y="372" font-family="'Arial Black','Arial',sans-serif" font-weight="900" font-style="italic" font-size="58" fill="#0a0a0c" text-anchor="middle" letter-spacing="4">K1LL3R</text>
   </g>
+  <!-- nome do app -->
+  <text x="256" y="446" font-family="'Arial Black','Arial',sans-serif" font-weight="900" font-style="italic" font-size="40" fill="#ffd400" text-anchor="middle" letter-spacing="1">COLEÇÃO PESSOAL</text>
 </g>
 </svg>
