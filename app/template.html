@@ -251,7 +251,7 @@ dd a{word-break:break-all}
 .t-filtros{margin-bottom:12px}
 .tvars{display:flex;flex-direction:column;gap:8px}
 .tvars.solta{margin-top:4px}
-.tvar{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow);cursor:pointer;transition:box-shadow .15s,transform .15s}
+.tvar{display:grid;grid-template-columns:auto auto 1fr auto;gap:10px;align-items:center;background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow);cursor:pointer;transition:box-shadow .15s,transform .15s}
 .tvar:hover{box-shadow:var(--shadow-up);transform:translateY(-1px)}
 .tvar.tem{border-color:var(--good)}
 .tvar.pend{opacity:.75;cursor:default}
@@ -259,6 +259,13 @@ dd a{word-break:break-all}
 .tv-own{width:30px;height:30px;flex:none;border-radius:50%;border:2px solid var(--line);background:var(--surf2);font-weight:800;color:var(--good-txt);font-size:15px;transition:all .15s}
 .tv-own.on{background:var(--good);border-color:var(--good);color:#fff}
 .tv-own.vazio{color:var(--mut);cursor:default;font-weight:700}
+.tv-foto{width:52px;height:52px;flex:none;border-radius:9px;background:var(--surf2);overflow:hidden;display:grid;place-items:center;position:relative}
+.tv-foto img{width:100%;height:100%;object-fit:cover;display:none}
+.tv-foto img.ok{display:block}
+.tv-foto img.ok~svg{display:none}
+.tv-foto svg{width:26px;height:26px;color:var(--mut);opacity:.65}
+.cast-card.t-cast{display:grid;grid-template-columns:88px 1fr;gap:12px;align-items:start}
+.cast-card.t-cast .t-cast-txt{min-width:0}
 .tv-main{min-width:0}
 .tv-top{display:flex;gap:8px;align-items:baseline}
 .tv-top b{font-size:14px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -416,8 +423,13 @@ try{ const raw=localStorage.getItem(LS_KEY); if(raw) ST=Object.assign(ST,JSON.pa
 if(ST.coversV!==3){ ST.covers={}; ST.coversV=3; }
 let saveT=null;
 function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ localStorage.setItem(LS_KEY,JSON.stringify(ST)); }catch(e){ toast('Não consegui salvar (armazenamento cheio?)'); } },250); }
-const stOf = id => ST.it[id] || {};
-function setSt(id,patch){ const cur=ST.it[id]||{}; Object.assign(cur,patch);
+/* ids com prefixo "tv:" são variações da base Tooned: o estado delas mora em TU
+   (coleção separada), mas passam pelas mesmas funções de foto do resto do app */
+const eToon = id => typeof id==='string' && id.startsWith('tv:');
+const stOf = id => eToon(id) ? tuOf(id.slice(3)) : (ST.it[id] || {});
+function setSt(id,patch){
+  if(eToon(id)){ tuSet(id.slice(3),patch); return; }
+  const cur=ST.it[id]||{}; Object.assign(cur,patch);
   for(const k of Object.keys(cur)) if(cur[k]===0||cur[k]===''||cur[k]==null) delete cur[k];
   if(Object.keys(cur).length) ST.it[id]=cur; else delete ST.it[id]; save(); }
 function own(id){ return stOf(id).o||0; } /* 0 falta · 1 a caminho · 2 tenho */
@@ -465,12 +477,14 @@ async function salvarFoto(id,slot,file){
     setSt(id,{ [slot==='m'?'fm':'fb']:1 });
     toast('Foto salva ✓');
   }catch(e){ toast('Erro ao salvar a foto'); console.error(e); }
+  if(eToon(id)){ tRefresh(); if(tVarAtual===id.slice(3)) renderVariante(tVarAtual); return; }
   refreshCard(id); if(detailId===id) renderDetail(id);
 }
 async function apagarFotoSlot(id,slot){
   await fDel(`${id}:${slot}`).catch(()=>{}); await fDel(`${id}:${slot}:t`).catch(()=>{});
   dropUrl(`${id}:${slot}`); dropUrl(`${id}:${slot}:t`);
   setSt(id,{ [slot==='m'?'fm':'fb']:0, [slot==='m'?'wm':'wb']:'' });
+  if(eToon(id)){ tRefresh(); if(tVarAtual===id.slice(3)) renderVariante(tVarAtual); return; }
   refreshCard(id); if(detailId===id) renderDetail(id);
 }
 
@@ -736,6 +750,7 @@ function tuSet(id,patch){
     const val=cur[k];
     if(val===null||val===undefined||val===''||val===false) delete cur[k];
     else if(k==='quantity'&&(!(val>1))) delete cur[k];   /* 1 é o padrão de quem tem */
+    else if((k==='fm'||k==='fb')&&!val) delete cur[k];   /* flag de foto sem foto */
   }
   if(Object.keys(cur).length) TU.v[id]=cur; else delete TU.v[id];
   tuSave();
@@ -748,6 +763,133 @@ function tStats(vars){
 }
 /* marcações órfãs = seed novo removeu/renomeou ids; nunca apagadas sozinhas */
 const tOrfaos = () => Object.keys(TU.v).filter(id=>!TV[id]);
+
+/* ---- Fotos da base Tooned ----------------------------------------
+   O catálogo não traz imagens, então cada variação vira um "item ponte"
+   com o mesmo formato dos da planilha. Assim ela reaproveita tudo que já
+   existe: foto sua (câmera), escolha manual na wiki, capa automática do
+   casting e a foto da versão exata casada pelo Toy #. */
+function tTitulosWiki(c){
+  const nome=c.canonical_name, cand=[];
+  const add=s=>{ s=String(s||'').replace(/\s+/g,' ').trim(); if(s&&!cand.includes(s)) cand.push(s); };
+  add(nome);
+  add(nome.replace(/\s*[—–-]\s*Tooned\s*$/i,''));            /* "… — Tooned" */
+  add(nome.replace(/\s*\([^)]*Tooned[^)]*\)\s*$/i,''));      /* "… (Tooned…)" */
+  add(nome.replace(/\s*\([^)]*\)\s*$/,''));                  /* qualquer sufixo entre () */
+  return cand.slice(0,3);
+}
+const tCoverWait={}; let tCoverT=null;
+if(ST.tcovV!==1){ ST.tcov={}; ST.tcovV=1; }
+if(!ST.tcov) ST.tcov={};
+function urlCoverToon(cid,pref){
+  const c=ST.tcov[cid];
+  if(!c) return 0;
+  if(pref==='mini') return (c.m&&c.b&&c.m!==c.b) ? c.m : 0;
+  return (pref==='m' ? (c.m||c.b) : (c.b||c.m))||0;
+}
+function pedirCoverToon(cid,img,pref){
+  if(wikiAutoOff||!navigator.onLine||!img) return;
+  if(cid in ST.tcov){ aplicarCoverToon(cid,[{img,pref:pref||'b'}]); return; }
+  (tCoverWait[cid] ||= []).push({img,pref:pref||'b'});
+  clearTimeout(tCoverT); tCoverT=setTimeout(buscarCoversToon,400);
+}
+function aplicarCoverToon(cid,lista){
+  const alvos=lista||tCoverWait[cid]||[];
+  if(!lista) delete tCoverWait[cid];
+  for(const {img,pref} of alvos){
+    const src=urlCoverToon(cid,pref);
+    if(!src||!img||!img.isConnected||img.classList.contains('ok')) continue;
+    img.src=src; img.onload=()=>img.classList.add('ok');
+  }
+}
+async function buscarCoversToon(){
+  if(wikiAutoOff){ for(const k in tCoverWait) delete tCoverWait[k]; return; }
+  const ids=Object.keys(tCoverWait).filter(c=>!(c in ST.tcov)).slice(0,8);
+  if(!ids.length) return;
+  try{
+    /* consulta todos os títulos candidatos de uma vez e fica com o que responder */
+    const porTitulo={}, titulos=[];
+    for(const cid of ids) for(const t of tTitulosWiki(TC[cid])){ (porTitulo[t] ||= []).push(cid); titulos.push(t); }
+    const u=`${WIKI}?action=query&format=json&origin=*&redirects=1&prop=pageimages%7Cimages&piprop=thumbnail&pithumbsize=400&imlimit=500&titles=${encodeURIComponent([...new Set(titulos)].join('|'))}`;
+    const j=await (await fetch(u)).json();
+    const alias={}; for(const n of (j.query?.normalized||[])) alias[n.from]=n.to;
+    for(const r of (j.query?.redirects||[])){ for(const k in alias) if(alias[k]===r.from) alias[k]=r.to; alias[r.from]=r.to; }
+    const paginas={};
+    for(const p of Object.values(j.query?.pages||{})) if(p.title) paginas[p.title]=p;
+    const escolhido={};
+    for(const cid of ids){
+      for(const t of tTitulosWiki(TC[cid])){
+        const p=paginas[alias[t]||t];
+        if(p&&!('missing' in p)&&(p.images?.length||p.thumbnail)){ escolhido[cid]={p,titulo:alias[t]||t}; break; }
+      }
+    }
+    const arquivos=new Set();
+    for(const cid in escolhido){
+      const e=classificarFotos(escolhido[cid].p.images);
+      escolhido[cid].e=e;
+      if(e.cart) arquivos.add(e.cart);
+      if(e.solta) arquivos.add(e.solta);
+    }
+    const fileUrl={}, lista=[...arquivos];
+    for(let i=0;i<lista.length;i+=40){
+      const u2=`${WIKI}?action=query&format=json&origin=*&prop=imageinfo&iiprop=url&iiurlwidth=400&titles=${encodeURIComponent(lista.slice(i,i+40).join('|'))}`;
+      const j2=await (await fetch(u2)).json();
+      for(const p of Object.values(j2.query?.pages||{})){
+        const ii=p.imageinfo?.[0]; if(ii) fileUrl[p.title]=ii.thumburl||ii.url;
+      }
+    }
+    for(const cid of ids){
+      const es=escolhido[cid];
+      ST.tcov[cid]= es ? { b:fileUrl[es.e.cart]||0, m:fileUrl[es.e.solta]||es.p.thumbnail?.source||0, t:es.titulo } : {b:0,m:0};
+    }
+    save();
+    for(const cid of ids) aplicarCoverToon(cid);
+  }catch(e){ wikiAutoOff=true; }
+  if(Object.keys(tCoverWait).some(c=>!(c in ST.tcov))) setTimeout(buscarCoversToon,300);
+}
+/* item ponte: mesmo formato dos itens da planilha, para reusar hidratarSlot/abrirWiki */
+const tItemCache={};
+function tItem(v){
+  if(tItemCache[v.id]) return tItemCache[v.id];
+  const c=TC[v.casting_id];
+  const arr=new Array(DATA.cols.length).fill(null);
+  const set=(k,val)=>{ if(val!=null&&val!=='') arr[CI[k]]=val; };
+  set('ano',v.year); set('casting',c?c.canonical_name:''); set('modelo',c?c.canonical_name:'');
+  set('serie',v.series); set('ncol',v.collector_number); set('toy',v.toy_number);
+  set('cor',v.color_deco); set('rodas',v.wheels); set('pais',v.country);
+  const tit=ST.tcov[v.casting_id]?.t || (c?tTitulosWiki(c)[0]:'');
+  if(tit) set('pagina',urlWiki(tit));
+  return tItemCache[v.id]={id:'tv:'+v.id, mk:'toon', cid:v.casting_id, v:arr, img:''};
+}
+/* miniatura de uma variação/casting: foto sua > escolha na wiki > capa do casting */
+async function tHidratarThumb(box,cid,vid){
+  const img=box.querySelector('img'); if(!img) return;
+  const mini=box.querySelector('.mini');
+  let blister=null, solta=null;
+  if(vid){
+    const s=tuOf(vid);
+    if(s.fb) blister=await fotoUrl(`tv:${vid}:b:t`);
+    if(!blister&&s.wb) blister=wikiThumb(s.wb,240);
+    if(s.fm) solta=await fotoUrl(`tv:${vid}:m:t`);
+    if(!solta&&s.wm) solta=wikiThumb(s.wm,240);
+  }
+  if(cid in ST.tcov){
+    if(!blister) blister=urlCoverToon(cid,'b')||null;
+    if(!solta) solta=urlCoverToon(cid,'m')||null;
+  }else{
+    if(!blister) pedirCoverToon(cid,img,'b');
+    if(!solta&&mini) pedirCoverToon(cid,mini,'mini');
+  }
+  const principal=blister||solta;
+  if(principal){ img.src=principal; img.onload=()=>img.classList.add('ok'); img.onerror=()=>img.classList.remove('ok'); }
+  if(mini&&blister&&solta&&blister!==solta){ mini.src=solta; mini.onload=()=>mini.classList.add('ok'); }
+}
+function tHidratarTudo(root){
+  for(const box of (root||document).querySelectorAll('[data-tthumb]')){
+    const [cid,vid]=box.dataset.tthumb.split('|');
+    tHidratarThumb(box,cid,vid||null);
+  }
+}
 
 /* ---- Filtros da aba Tooned ---- */
 const TFILTROS=[
@@ -1096,6 +1238,7 @@ function tLinhaVar(v){
                v.wheels&&`rodas ${esc(v.wheels)}`].filter(Boolean).join(' · ');
   return `<div class="tvar ${tem?'tem':''}" data-tvar="${esc(v.id)}">
     <button class="tv-own ${tem?'on':''}" data-town="${esc(v.id)}" aria-pressed="${tem}" title="${tem?'Tenho':'Não tenho'}">${tem?'✓':''}</button>
+    <div class="tv-foto" data-tthumb="${esc(v.casting_id)}|${esc(v.id)}"><img alt="">${PH_CAR}</div>
     <div class="tv-main">
       <div class="tv-top"><b>${esc(v.color_deco||'(sem cor documentada)')}</b>
         <span class="ano">${v.year??'—'}</span></div>
@@ -1122,6 +1265,7 @@ function renderTooned(){
     content.innerHTML=`${tHero(g)}${tChips()}
       ${vis.length?`<div class="tvars solta">${vis.map(v=>tLinhaVar(v)).join('')}</div>`
         :'<p class="vazio">Nenhuma variação com esses filtros.</p>'}`;
+    tHidratarTudo(content);
     return;
   }
   const castings=tCastingsVisiveis();
@@ -1130,15 +1274,19 @@ function renderTooned(){
     ${castings.length?`<div class="grid">${castings.map(c=>{
       const t=TC[c.casting_id], s=tStats(t.vars.concat(t.prod));
       const nesta=t.vars.concat(t.prod).filter(v=>visIds.has(v.id)).length;
-      return `<button class="cast-card" data-tcast="${esc(c.casting_id)}">
+      return `<button class="cast-card t-cast" data-tcast="${esc(c.casting_id)}">
+        <div class="thumb" data-tthumb="${esc(c.casting_id)}|"><img alt="">${PH_CAR}<img class="mini" alt=""></div>
+        <div class="t-cast-txt">
         <h3>${esc(c.canonical_name)}</h3>
         <div class="meta">Estreia ${c.debut_year} · ${c.generation==='legacy'?'Legacy':'Modern'} · ${esc(KIND[c.tooned_kind]||'')}</div>
         <div class="meta">${fmt(s.total)} variações no checklist${nesta!==s.total?` · ${fmt(nesta)} com os filtros`:''}</div>
         ${meterHTML({total:s.total,tenho:s.tenho,caminho:0,faltam:s.total-s.tenho})}
         <div class="prog">${fmt(s.tenho)} de ${fmt(s.total)} · ${s.pct.toLocaleString('pt-BR',{maximumFractionDigits:0})}%</div>
+        </div>
       </button>`; }).join('')}</div>`
       : '<p class="vazio">Nenhum casting com esses filtros.</p>'}
     ${tExtras()}`;
+  tHidratarTudo(content);
 }
 function tHero(g){
   return `<div class="hero t-hero"><div class="big">${g.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})}%</div>
@@ -1198,6 +1346,7 @@ function renderCasting(id){
     ${pend?`<h4 class="t-sec">Anunciados / aguardando detalhes <span>${fmt((TPEND[id]||[]).length)}</span></h4>
       <p class="t-nota">Ainda sem metadados confirmados — não contam no progresso e não têm marcação de posse.</p>
       <div class="tvars">${pend}</div>`:''}`;
+  tHidratarTudo($('#tcBody'));
   abrir('mCast');
 }
 /* ---- Ficha da variação (dados do usuário) ---- */
@@ -1207,7 +1356,9 @@ function renderVariante(id){
   const c=TC[v.casting_id], u=tuOf(id);
   $('#tvTitle').textContent=`${c?c.canonical_name:''} · ${v.year??''}`;
   const campo=(rot,html)=>`<label class="t-campo"><span>${rot}</span>${html}</label>`;
+  const ponte=tItem(v);
   $('#tvBody').innerHTML=`
+    <div class="fotos">${slotHTML(ponte,'m','Miniatura (solta)',PH_CAR)}${slotHTML(ponte,'b','No blister',PH_BLISTER)}</div>
     <div class="badges" style="margin-bottom:10px">${tBadges(v)}</div>
     <dl>
       <dt>Cor / deco</dt><dd>${esc(v.color_deco||'—')}</dd>
@@ -1243,6 +1394,7 @@ function renderVariante(id){
     </div>
     <div class="nota-box"><h4 style="margin:12px 0 5px;font-size:13px">Minhas anotações</h4>
       <textarea id="tfNota" placeholder="Onde comprei, detalhes da variação, com quem está…">${esc(u.notes||'')}</textarea></div>`;
+  hidratarSlot($('#tvBody'),ponte,'m'); hidratarSlot($('#tvBody'),ponte,'b');
   abrir('mVar');
   const liga=(sel,ev,fn)=>{ const el=$(sel); if(el) el.addEventListener(ev,fn); };
   liga('#tfQtd','input',e=>tuSet(id,{quantity:Math.max(1,+e.target.value||1)}));
@@ -1464,7 +1616,7 @@ function renderHelp(){
       <li><b>Fotos</b> — abra um item e use <b>📷</b> para fotografar a <b>miniatura solta</b> e o <b>blister</b> (no celular abre a câmera). Use <b>🌐 Wiki</b> para escolher uma foto de referência da Hot Wheels Wiki — quando a linha da tabela tem o mesmo Toy #, ela aparece marcada com <b>✓</b>.</li>
       <li><b>Busca e filtros</b> — a busca cobre casting, modelo, série, cor, Toy #, tampo e notas. Os filtros mostram a contagem de cada opção.</li>
       <li><b>Backup</b> — no Painel, exporte um arquivo .json com marcações, notas e fotos; importe no outro aparelho. Sem backup, os dados vivem só neste navegador.</li>
-      <li><b>Aba Tooned</b> — checklist próprio, com catálogo curado de ${fmt(TOON.totais.castings)} castings e ${fmt(TOON.totais.variantes)} variações (${fmt(TOON.totais.checklist)} no progresso). Cada casting tem sua tela com as variações em ordem cronológica, uma seção de <b>variações de produção</b> (roda, base, tampografia, país) e, quando existe, <b>anunciados / aguardando detalhes</b> — que não contam no progresso nem têm marcação de posse. Em cada variação você guarda posse, quantidade, estado (lacrado/solto/os dois), estado do cartão, preço e data da compra, anotações e favorito. Diferenças só de embalagem (long/short card, versão internacional) não são carrinhos diferentes.</li>
+      <li><b>Aba Tooned</b> — checklist próprio, com catálogo curado de ${fmt(TOON.totais.castings)} castings e ${fmt(TOON.totais.variantes)} variações (${fmt(TOON.totais.checklist)} no progresso). Cada casting tem sua tela com as variações em ordem cronológica, uma seção de <b>variações de produção</b> (roda, base, tampografia, país) e, quando existe, <b>anunciados / aguardando detalhes</b> — que não contam no progresso nem têm marcação de posse. Em cada variação você guarda posse, quantidade, estado (lacrado/solto/os dois), estado do cartão, preço e data da compra, anotações e favorito — e as <b>duas fotos</b> (miniatura solta e no blister), com 📷 para fotografar a sua e 🌐 para escolher na wiki; sem foto sua, o app usa a capa automática do casting. Os cards e as linhas mostram a miniatura. Diferenças só de embalagem (long/short card, versão internacional) não são carrinhos diferentes.</li>
       <li><b>Filtros do Tooned</b> — castings dedicados, membros oficiais da série, Legacy 2003–2016, Modern 2017+, TH, STH, ZAMAC, exclusivos, 5-Packs, Gulf, 56th Anniversary, tenho/não tenho, favoritos e variações de produção. Protótipos e não lançados ficam fora por padrão. Os itens de 2014–2015 que só usavam o nome Tooned e as famílias irmãs (Fatbax, Hardnoze, Blings, Crooze) ficam em seções à parte e <b>não somam</b> ao progresso.</li>
       <li><b>Aba Kool Kombi</b> — esse casting é Volkswagen e não está na planilha (que cobre BMW, Porsche e Ferrari), então a lista de versões vem da Hot Wheels Wiki, também ao abrir a aba.</li>
       <li>Nas duas abas, o que vem da wiki funciona como qualquer item: dá para marcar, fotografar, anotar e tudo entra no backup. Sem internet, aparece só o que é da planilha.</li>
@@ -1486,6 +1638,12 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const m=[...docum
 let toastT=null;
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
 
+function alvoFoto(){
+  if($('#mVar').classList.contains('open')&&tVarAtual&&TV[tVarAtual])
+    return {id:'tv:'+tVarAtual, it:tItem(TV[tVarAtual])};
+  if(detailId&&BYID[detailId]) return {id:detailId, it:BYID[detailId]};
+  return null;
+}
 document.addEventListener('click',e=>{
   const el=e.target;
   const closeBtn=el.closest('[data-close]'); if(closeBtn){ fechar(closeBtn.dataset.close); return; }
@@ -1567,15 +1725,16 @@ document.addEventListener('click',e=>{
   const card=el.closest('.card[data-id]');
   if(card&&!el.closest('.ownseg')){ listItems.length||(listItems=filtrar()); renderDetail(card.dataset.id); return; }
 
-  /* detalhe: fotos */
+  /* detalhe: fotos (vale para os itens da planilha e para as variações Tooned) */
+  const alvo=alvoFoto();
   const fotoBtn=el.closest('[data-foto]');
-  if(fotoBtn&&detailId){ const inp=$('#inpFoto'); inp.dataset.id=detailId; inp.dataset.slot=fotoBtn.dataset.foto; inp.value=''; inp.click(); return; }
+  if(fotoBtn&&alvo){ const inp=$('#inpFoto'); inp.dataset.id=alvo.id; inp.dataset.slot=fotoBtn.dataset.foto; inp.value=''; inp.click(); return; }
   const wikiBtn=el.closest('[data-wiki]');
-  if(wikiBtn&&detailId){ abrirWiki(BYID[detailId],wikiBtn.dataset.wiki); return; }
+  if(wikiBtn&&alvo){ abrirWiki(alvo.it,wikiBtn.dataset.wiki); return; }
   const delBtn=el.closest('[data-del]');
-  if(delBtn&&detailId){ if(confirm('Remover a foto deste espaço?')) apagarFotoSlot(detailId,delBtn.dataset.del); return; }
+  if(delBtn&&alvo){ if(confirm('Remover a foto deste espaço?')) apagarFotoSlot(alvo.id,delBtn.dataset.del); return; }
   const zoomEl=el.closest('[data-zoom]');
-  if(zoomEl&&detailId){
+  if(zoomEl&&alvo){
     const img=zoomEl.querySelector('img');
     if(img&&img.classList.contains('ok')){ $('#mZoom img').src=img.src; abrir('mZoom'); }
     return;
@@ -1588,7 +1747,9 @@ document.addEventListener('click',e=>{
     if(c&&id){
       setSt(id,{ [usar.dataset.usar==='m'?'wm':'wb']:c.src });
       toast(usar.dataset.usar==='m'?'Imagem definida para a miniatura ✓':'Imagem definida para o blister ✓');
-      fechar('mWiki'); refreshCard(id); if(detailId===id) renderDetail(id);
+      fechar('mWiki');
+      if(eToon(id)){ tRefresh(); if(tVarAtual===id.slice(3)) renderVariante(tVarAtual); return; }
+      refreshCard(id); if(detailId===id) renderDetail(id);
     }
     return;
   }

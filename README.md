@@ -41,7 +41,9 @@ pesquisa fechada em 15/08/2026).
   variações, quantas você tem, percentual e a lista cronológica), com **variações de produção** em
   seção própria e **anunciados / aguardando detalhes** sem botão de posse. Por variação você guarda
   posse, quantidade, estado, estado do cartão, preço, data da compra, anotações e favorito —
-  gravados **separados do catálogo**, ligados pelo `variant.id`.
+  gravados **separados do catálogo**, ligados pelo `variant.id`. Cada variação também tem as duas
+  fotos (solta e no blister): a sua pela câmera, uma escolhida na wiki ou a capa automática do
+  casting; cards e linhas exibem a miniatura.
   Itens em revisão ficam fora; os de 2014–2015 que só usavam o nome Tooned e as famílias irmãs
   (Fatbax, Hardnoze, Blings, Crooze) ficam em seções à parte e não somam ao progresso.
 - **Kool Kombi**: todas as versões desse casting. Como ele é Volkswagen e a planilha cobre só
