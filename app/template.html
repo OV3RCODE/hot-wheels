@@ -114,6 +114,9 @@ main{max-width:1200px;margin:0 auto;padding:14px}
 .thumb img.ok~svg{display:none}
 .thumb svg{width:44px;height:44px;color:var(--mut);opacity:.7}
 .thumb .src{position:absolute;right:3px;bottom:3px;background:rgba(0,0,0,.55);color:#fff;font-size:9px;padding:1px 5px;border-radius:6px;display:none}
+/* recorte da miniatura solta sobre a foto do blister */
+.thumb .mini{position:absolute;right:2px;bottom:2px;width:34px;height:34px;border-radius:8px;object-fit:cover;border:2px solid var(--surf);background:var(--surf2);display:none}
+.thumb .mini.ok{display:block}
 .c-main{min-width:0;display:flex;flex-direction:column;gap:3px}
 .c-top{display:flex;gap:8px;align-items:baseline}
 .c-top h3{margin:0;font-size:15px;font-weight:700;line-height:1.3;flex:1;min-width:0}
@@ -352,8 +355,8 @@ for(const it of ITEMS){ const k=nrm(F(it,'casting')||''); (porCasting[k] ||= [])
 const LS_KEY='hwc.state.v1';
 let ST = {it:{}, covers:{}};
 try{ const raw=localStorage.getItem(LS_KEY); if(raw) ST=Object.assign(ST,JSON.parse(raw)); }catch(e){}
-/* capas v2 preferem imagem de cartela/blister — descarta capas antigas (só a foto solta) */
-if(ST.coversV!==2){ ST.covers={}; ST.coversV=2; }
+/* capas v3 guardam duas fotos por casting ({m: solta, b: cartela}) — descarta o cache antigo */
+if(ST.coversV!==3){ ST.covers={}; ST.coversV=3; }
 let saveT=null;
 function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ localStorage.setItem(LS_KEY,JSON.stringify(ST)); }catch(e){ toast('Não consegui salvar (armazenamento cheio?)'); } },250); }
 const stOf = id => ST.it[id] || {};
@@ -430,63 +433,105 @@ function urlWikiPagina(it){
   for(const c of ['pagina','fonte']){ const u=F(it,c); if(u && /fandom\.com\/wiki\//.test(u)) return u; }
   return null;
 }
-/* capas por casting: busca em lote uma imagem de cartela/blister da página
-   (cai para a imagem principal quando a página não tem foto de cartela) */
+/* Capas por casting: busca em lote DUAS imagens de cada página —
+   a miniatura solta e a do blister/cartela — guardadas como {m,b}. */
 const coverWait={}; let coverT=null;
-function pedirCover(title,img){
+function pedirCover(title,img,pref){
   if(wikiAutoOff||!navigator.onLine) return;
-  if(title in ST.covers){ aplicarCover(title); return; }
-  (coverWait[title] ||= []).push(img);
+  if(title in ST.covers){ aplicarCover(title,[{img,pref:pref||'b'}]); return; }
+  (coverWait[title] ||= []).push({img,pref:pref||'b'});
   clearTimeout(coverT); coverT=setTimeout(buscarCovers,400);
 }
-function melhorCartela(imgs){
-  let best=null,bestN=0;
+/* Escolhe, entre os arquivos da página, a melhor foto de cartela e a melhor solta */
+function classificarFotos(imgs){
+  let cart=null, cartN=0, solta=null, soltaN=0;
   for(const im of imgs||[]){
-    const n=im.title||'';
-    if(/\.svg$/i.test(n)) continue;
-    let s=0;
-    if(/carded/i.test(n)) s=3;
-    else if(/card|blister|cartela/i.test(n)) s=2;
-    else if(/pack(age)?/i.test(n)) s=1;
-    if(s>bestN){ bestN=s; best=n; }
+    const nome=im.title||'';
+    if(/\.svg$/i.test(nome)) continue;
+    const l=nrm(nome);
+    /* descarta o que claramente não é o carro */
+    if(/logo|wheel type|rodas|base\b|interior|tampo detail|comparison|collage|scale drawing/.test(l)) continue;
+    let c=0;
+    if(/carded/.test(l)) c=3;
+    else if(/\bcard\b|blister|cartela|package|packaging/.test(l)) c=2;
+    if(c){ if(c>cartN){ cartN=c; cart=nome; } continue; }
+    let s=1;
+    if(/loose/.test(l)) s=3;
+    else if(/prototype|mock|render/.test(l)) s=0;
+    if(s>soltaN){ soltaN=s; solta=nome; }
   }
-  return best;
+  return {cart,solta};
 }
 async function buscarCovers(){
   if(wikiAutoOff){ for(const t in coverWait) delete coverWait[t]; return; }
   const titles=Object.keys(coverWait).filter(t=>!(t in ST.covers)).slice(0,12);
   if(!titles.length) return;
   try{
-    const u=`${WIKI}?action=query&format=json&origin=*&redirects=1&prop=pageimages%7Cimages&piprop=thumbnail&pithumbsize=360&imlimit=500&titles=${encodeURIComponent(titles.join('|'))}`;
+    const u=`${WIKI}?action=query&format=json&origin=*&redirects=1&prop=pageimages%7Cimages&piprop=thumbnail&pithumbsize=400&imlimit=500&titles=${encodeURIComponent(titles.join('|'))}`;
     const j=await (await fetch(u)).json();
     const alias={}; for(const n of (j.query?.normalized||[])) alias[n.from]=n.to;
     for(const r of (j.query?.redirects||[])){ for(const k in alias) if(alias[k]===r.from) alias[k]=r.to; alias[r.from]=r.to; }
-    const byTitle={}, cartela={};
+    const principal={}, escolha={};
     for(const p of Object.values(j.query?.pages||{})){
-      byTitle[p.title]=p.thumbnail?.source||0;
-      const f=melhorCartela(p.images); if(f) cartela[p.title]=f;
+      principal[p.title]=p.thumbnail?.source||0;
+      escolha[p.title]=classificarFotos(p.images);
     }
-    /* resolve a URL das imagens de cartela escolhidas */
-    const files=[...new Set(Object.values(cartela))], fileUrl={};
-    if(files.length){
-      const u2=`${WIKI}?action=query&format=json&origin=*&prop=imageinfo&iiprop=url&iiurlwidth=360&titles=${encodeURIComponent(files.join('|'))}`;
+    /* resolve as URLs dos dois arquivos escolhidos de cada página */
+    const files=[...new Set(Object.values(escolha).flatMap(e=>[e.cart,e.solta]).filter(Boolean))];
+    const fileUrl={};
+    for(let i=0;i<files.length;i+=40){
+      const u2=`${WIKI}?action=query&format=json&origin=*&prop=imageinfo&iiprop=url&iiurlwidth=400&titles=${encodeURIComponent(files.slice(i,i+40).join('|'))}`;
       const j2=await (await fetch(u2)).json();
       for(const p of Object.values(j2.query?.pages||{})){
         const ii=p.imageinfo?.[0]; if(ii) fileUrl[p.title]=ii.thumburl||ii.url;
       }
     }
-    for(const t of titles){ const fin=alias[t]||t; ST.covers[t]=fileUrl[cartela[fin]]||byTitle[fin]||0; }
+    for(const t of titles){
+      const fin=alias[t]||t, e=escolha[fin]||{};
+      ST.covers[t]={ b:fileUrl[e.cart]||0, m:fileUrl[e.solta]||principal[fin]||0 };
+    }
     save();
     for(const t of titles) aplicarCover(t);
   }catch(e){ wikiAutoOff=true; }
   if(Object.keys(coverWait).some(t=>!(t in ST.covers))) setTimeout(buscarCovers,300);
 }
-function aplicarCover(title){
-  const imgs=coverWait[title]||[]; delete coverWait[title];
-  const src=ST.covers[title];
-  if(!src) return;
-  for(const img of imgs){ if(!img.isConnected||img.classList.contains('ok')) continue;
-    img.src=src; img.onload=()=>img.classList.add('ok'); }
+function urlCover(title,pref){
+  const c=ST.covers[title];
+  if(!c) return 0;
+  if(typeof c==='string') return pref==='mini'?0:c;   /* cache de versão antiga */
+  /* 'mini' = o recorte da solta no card: só quando existem as duas e são diferentes */
+  if(pref==='mini') return (c.m&&c.b&&c.m!==c.b) ? c.m : 0;
+  return (pref==='m' ? (c.m||c.b) : (c.b||c.m))||0;
+}
+function aplicarCover(title,lista){
+  const alvos=lista||coverWait[title]||[];
+  if(!lista) delete coverWait[title];
+  for(const {img,pref} of alvos){
+    const src=urlCover(title,pref);
+    if(!src||!img||!img.isConnected||img.classList.contains('ok')) continue;
+    img.src=src; img.onload=()=>img.classList.add('ok');
+  }
+}
+/* Foto da versão exata: casa o Toy #/cor do item com a linha da tabela na wiki */
+const fotoVersaoCache={};
+async function fotoDaVersao(it){
+  const t=tituloWiki(it); if(!t||wikiAutoOff||!navigator.onLine) return null;
+  const chave=it.id;
+  if(chave in fotoVersaoCache) return fotoVersaoCache[chave];
+  try{
+    const linhas=linhasVersoes(await paginaWiki(t));
+    const toy=nrm(String(F(it,'toy')||'').trim()), cor=nrm(String(F(it,'cor')||'').trim());
+    let melhor=null, nivel=0;
+    for(const r of linhas){
+      if(!r.img) continue;
+      let n=0;
+      if(toy.length>=4&&nrm(r.toy||'').includes(toy)) n=3;
+      else if(cor.length>=3&&nrm(r.cor||'')===cor) n=2;
+      else if(cor.length>=3&&nrm(r.cor||'').includes(cor)) n=1;
+      if(n>nivel){ nivel=n; melhor=r.img; }
+    }
+    return fotoVersaoCache[chave]=melhor;
+  }catch(e){ return fotoVersaoCache[chave]=null; }
 }
 function wikiFull(src){ return src.replace(/\/scale-to-width-down\/\d+/,''); }
 function wikiThumb(src,w){ const base=wikiFull(src); const m=base.match(/^(.*?\/revision\/latest)(\?.*)?$/); return m? `${m[1]}/scale-to-width-down/${w}${m[2]||''}` : base; }
@@ -765,7 +810,7 @@ function cardHTML(it){
   const cor=F(it,'cor'), toy=F(it,'toy');
   const pri=F(it,'pri')||'', rar=F(it,'rar')||'', excl=F(it,'excl');
   return `<article class="card ${o===2?'tenho':o===1?'caminho':''}" data-id="${it.id}">
-    <div class="thumb"><img alt="">${PH_CAR}</div>
+    <div class="thumb"><img alt="">${PH_CAR}<img class="mini" alt=""></div>
     <div class="c-main">
       <div class="c-top"><h3>${esc(F(it,'casting')||'—')}</h3><span class="ano">${F(it,'ano')??'—'}</span></div>
       ${serie?`<div class="c-sub">${esc(serie)}</div>`:''}
@@ -786,18 +831,28 @@ function cardHTML(it){
 }
 async function hidratarThumb(card,it){
   const img=card.querySelector('.thumb img'); if(!img) return;
+  const mini=card.querySelector('.thumb .mini');
   const s=stOf(it.id);
-  let src=null;
-  if(s.fb) src=await fotoUrl(`${it.id}:b:t`);
-  if(!src&&s.fm) src=await fotoUrl(`${it.id}:m:t`);
-  if(!src&&s.wb) src=wikiThumb(s.wb,240);
-  if(!src&&s.wm) src=wikiThumb(s.wm,240);
-  if(!src&&it.img) src=wikiThumb(it.img,240);
-  if(!src){
-    const t=tituloWiki(it);
-    if(t){ if(ST.covers[t]) src=ST.covers[t]; else if(!(t in ST.covers)){ pedirCover(t,img); } }
+  /* as duas fotos: a do blister é a principal, a da solta vira o recorte */
+  let blister=null, solta=null;
+  if(s.fb) blister=await fotoUrl(`${it.id}:b:t`);
+  if(!blister&&s.wb) blister=wikiThumb(s.wb,240);
+  if(s.fm) solta=await fotoUrl(`${it.id}:m:t`);
+  if(!solta&&s.wm) solta=wikiThumb(s.wm,240);
+  if(!solta&&it.img) solta=wikiThumb(it.img,240);
+  const t=tituloWiki(it);
+  if(t){
+    if(t in ST.covers){
+      if(!blister) blister=urlCover(t,'b')||null;
+      if(!solta) solta=urlCover(t,'m')||null;
+    }else{
+      if(!blister) pedirCover(t,img,'b');
+      if(!solta&&mini) pedirCover(t,mini,'mini');
+    }
   }
-  if(src){ img.src=src; img.onload=()=>img.classList.add('ok'); img.onerror=()=>img.classList.remove('ok'); }
+  const principal=blister||solta;
+  if(principal){ img.src=principal; img.onload=()=>img.classList.add('ok'); img.onerror=()=>img.classList.remove('ok'); }
+  if(mini&&blister&&solta&&blister!==solta){ mini.src=solta; mini.onload=()=>mini.classList.add('ok'); }
 }
 function refreshCard(id){
   const card=$('#content').querySelector(`.card[data-id="${id}"]`); if(!card) return;
@@ -947,8 +1002,20 @@ async function hidratarSlot(root,it,slot){
   if(temFoto){ src=await fotoUrl(`${it.id}:${slot}`); origem='minha foto'; }
   if(!src&&wiki){ src=wikiThumb(wiki,700); origem='wiki'; }
   if(!src&&slot==='m'&&it.img){ src=wikiThumb(it.img,700); origem='wiki (lista)'; }
-  if(!src&&slot==='b'){ const t=tituloWiki(it); if(t&&ST.covers[t]){ src=ST.covers[t]; origem='wiki (capa do casting)'; } }
+  const t=tituloWiki(it);
+  if(!src&&t){
+    if(t in ST.covers){ const c=urlCover(t,slot); if(c){ src=c; origem='wiki (casting)'; } }
+    else pedirCover(t,img,slot);
+  }
   if(src){ img.src=src; img.onload=()=>{img.classList.add('ok')}; tag.textContent=origem; tag.style.display='block'; }
+  /* a foto da versão exata (mesmo Toy #) substitui a capa genérica da solta */
+  if(slot==='m'&&!temFoto&&!wiki&&!it.img&&t){
+    fotoDaVersao(it).then(u=>{
+      if(!u||!img.isConnected) return;
+      img.src=wikiThumb(u,700); img.onload=()=>img.classList.add('ok');
+      tag.textContent='wiki (esta versão)'; tag.style.display='block';
+    });
+  }
 }
 function renderDetail(id){
   const it=BYID[id]; if(!it) return;
@@ -1087,8 +1154,8 @@ async function importarBackup(file){
     const j=JSON.parse(await file.text());
     if(j.app!=='hwc') throw new Error('formato');
     Object.assign(ST.it,j.estado?.it||{});
-    /* capas de backups antigos (v1) eram da foto solta — ignora e deixa rebuscar */
-    if(j.estado?.coversV===2) Object.assign(ST.covers,j.estado?.covers||{});
+    /* capas de backups antigos guardavam uma foto só — ignora e deixa rebuscar as duas */
+    if(j.estado?.coversV===3) Object.assign(ST.covers,j.estado?.covers||{});
     save();
     let n=0;
     for(const f of (j.fotos||[])){
@@ -1119,7 +1186,7 @@ function renderHelp(){
       <li><b>Aba Tooned</b> — todo carro em estilo Tooned, de qualquer marca. Junta o que já está na planilha (castings com "Tooned" no nome e os lançamentos da série Tooned) com <b>todos os demais castings Tooned da Hot Wheels Wiki</b>, buscados quando você abre a aba, com internet.</li>
       <li><b>Aba Kool Kombi</b> — esse casting é Volkswagen e não está na planilha (que cobre BMW, Porsche e Ferrari), então a lista de versões vem da Hot Wheels Wiki, também ao abrir a aba.</li>
       <li>Nas duas abas, o que vem da wiki funciona como qualquer item: dá para marcar, fotografar, anotar e tudo entra no backup. Sem internet, aparece só o que é da planilha.</li>
-      <li><b>Capas automáticas</b> — online, o app busca uma foto <b>na cartela/blister</b> de cada casting na wiki para os cards ainda sem foto (se a página não tiver foto de cartela, usa a foto principal).</li>
+      <li><b>Fotos automáticas</b> — online, o app preenche sozinho <b>as duas fotos</b> de cada carrinho a partir da wiki: a <b>miniatura solta</b> e a <b>cartela/blister</b>. Na foto da solta, quando a tabela da wiki tem uma linha com o <b>mesmo Toy #</b> do item, ele usa a foto daquela versão exata (a etiqueta mostra "wiki (esta versão)"); senão usa a foto geral do casting. No card da lista aparece o blister, com a solta num recorte no canto. Sua própria foto sempre tem prioridade sobre as automáticas.</li>
     </ul>
     <h3>Critérios da pesquisa</h3>
     <table class="help-tab">${guia}</table>
