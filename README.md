@@ -34,9 +34,16 @@ pesquisa fechada em 15/08/2026).
   status, ano, tipo, raridade, prioridade, escala/escopo, situação e com/sem foto.
 - **Castings**: um card por molde com o range de anos, total de versões e seu progresso — toque
   para ver todas as versões daquele molde.
-- **Tooned**: todo carro em estilo Tooned, de qualquer marca. Soma o que já existe na planilha
-  (castings com "Tooned" no nome e os lançamentos da série Tooned) com **todos os outros castings
-  Tooned da Hot Wheels Wiki**, buscados ao abrir a aba.
+- **Tooned**: checklist de colecionador sobre a base curada em
+  `data/hot_wheels_tooned_variants_2026-08-19.json` — 53 castings e 324 variações documentadas
+  (320 no checklist principal). Progresso conta só `primary_checklist === true` e
+  `status === "released"`. Cada casting tem sua tela (estreia, geração, classificação, total de
+  variações, quantas você tem, percentual e a lista cronológica), com **variações de produção** em
+  seção própria e **anunciados / aguardando detalhes** sem botão de posse. Por variação você guarda
+  posse, quantidade, estado, estado do cartão, preço, data da compra, anotações e favorito —
+  gravados **separados do catálogo**, ligados pelo `variant.id`.
+  Itens em revisão ficam fora; os de 2014–2015 que só usavam o nome Tooned e as famílias irmãs
+  (Fatbax, Hardnoze, Blings, Crooze) ficam em seções à parte e não somam ao progresso.
 - **Kool Kombi**: todas as versões desse casting. Como ele é Volkswagen e a planilha cobre só
   BMW/Porsche/Ferrari, a lista vem inteira da Hot Wheels Wiki.
 
@@ -57,6 +64,7 @@ pesquisa fechada em 15/08/2026).
 | `app/template.html` | Código-fonte do app (HTML/CSS/JS) |
 | `tools/build.py` | Gera o `index.html` a partir da planilha + template |
 | `data/…checklist.xlsx` | A planilha original com todos os dados |
+| `data/hot_wheels_tooned_variants_2026-08-19.json` | Base curada Tooned (fonte de verdade do catálogo) |
 | `manifest.webmanifest` + `icons/` | Nome e ícone do app na tela inicial do celular |
 
 ## Atualizar os dados
@@ -71,3 +79,14 @@ python3 tools/build.py
 O script lê as abas BMW / Porsche / Ferrari / Outras linhas / Castings / Guia / Fontes e
 reconstrói o `index.html`. As marcações e fotos dos usuários não são afetadas — elas ficam
 no navegador, fora do arquivo.
+
+## Atualizar a base Tooned
+
+Troque o JSON em `data/` (mantendo o nome ou ajustando `TOONED` em `tools/build.py`) e rode
+`python3 tools/build.py`. O build **valida antes de gerar** e falha se houver `variant.id`
+duplicado, `casting_id` duplicado ou `casting_id` órfão; ao final imprime os totais
+(castings, variações, checklist principal, variações de produção, itens 2014–2015, em revisão).
+
+A coleção do usuário vive em `localStorage` sob `hwt.user.v1`, indexada por `variant.id`, e nunca
+é escrita por cima do seed. Marcações cujos ids sumirem de uma base nova **não são apagadas** — o
+app avisa quantas ficaram órfãs e elas voltam a aparecer se os ids retornarem.
