@@ -245,6 +245,51 @@ dd a{word-break:break-all}
 .help-tab td{border-top:1px solid var(--line);padding:7px 8px 7px 0;vertical-align:top}
 .help-tab td:first-child{color:var(--mut);white-space:nowrap;padding-right:12px}
 
+/* ---------- Base Tooned ---------- */
+.t-hero{background:linear-gradient(125deg,#5b1ea8 0%,#9b1fb5 45%,#ff5a1f 100%)}
+.t-hero::after{content:'💥'}
+.t-filtros{margin-bottom:12px}
+.tvars{display:flex;flex-direction:column;gap:8px}
+.tvars.solta{margin-top:4px}
+.tvar{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow);cursor:pointer;transition:box-shadow .15s,transform .15s}
+.tvar:hover{box-shadow:var(--shadow-up);transform:translateY(-1px)}
+.tvar.tem{border-color:var(--good)}
+.tvar.pend{opacity:.75;cursor:default}
+.tvar.pend:hover{transform:none;box-shadow:var(--shadow)}
+.tv-own{width:30px;height:30px;flex:none;border-radius:50%;border:2px solid var(--line);background:var(--surf2);font-weight:800;color:var(--good-txt);font-size:15px;transition:all .15s}
+.tv-own.on{background:var(--good);border-color:var(--good);color:#fff}
+.tv-own.vazio{color:var(--mut);cursor:default;font-weight:700}
+.tv-main{min-width:0}
+.tv-top{display:flex;gap:8px;align-items:baseline}
+.tv-top b{font-size:14px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tv-sub{font-size:12.5px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tv-go{color:var(--mut);font-size:19px;font-weight:700}
+.t-sec{font-size:14px;margin:18px 0 8px;display:flex;align-items:center;gap:8px}
+.t-sec span{font-size:11.5px;font-weight:600;color:var(--ink2);background:var(--surf2);border-radius:999px;padding:2px 9px}
+.t-nota{font-size:12.5px;color:var(--mut);margin:0 0 10px;line-height:1.55}
+.bdg.t-esp{background:var(--acc-soft);color:var(--ink)}
+.bdg.t-super_treasure_hunt,.bdg.t-treasure_hunt{background:linear-gradient(120deg,#ffd400,#ff8a00);color:#3a2c00}
+.bdg.t-zamac{background:#c9ccd4;color:#25262b}
+.bdg.t-prod{background:var(--warn-soft);color:var(--ink)}
+.bdg.t-fora{background:var(--surf2);color:var(--mut);border:1px dashed var(--line)}
+.bdg.t-fav{background:var(--brand3);color:#3a2c00}
+.t-cabec{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.t-cabec-r{text-align:right;flex:none}
+.t-cabec-r .val{font-size:26px;font-weight:800;line-height:1.1}
+.t-cabec-r .val small{font-size:14px;color:var(--mut);font-weight:500}
+.t-cabec .meta{font-size:12.5px;color:var(--ink2)}
+.t-form{display:grid;gap:10px;background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+.t-campo{display:flex;align-items:center;gap:10px;justify-content:space-between;font-size:13.5px}
+.t-campo>span{color:var(--ink2);flex:none}
+.t-campo input,.t-campo select{flex:1;max-width:60%;background:var(--surf2);border:1.5px solid var(--line);border-radius:10px;padding:7px 10px;outline:none}
+.t-campo input:focus,.t-campo select:focus{border-color:var(--brand2)}
+.t-campo .chip{max-width:60%}
+.t-extra{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-top:10px;box-shadow:var(--shadow)}
+.t-extra summary{font-weight:700;font-size:13.5px;cursor:pointer}
+.t-extra[open] summary{margin-bottom:8px}
+.t-fam{margin:10px 0}
+.t-fam p{margin:2px 0;font-size:12.5px;color:var(--ink2)}
+.t-lista{margin:0;padding-left:18px;font-size:13px;color:var(--ink2);display:grid;gap:5px}
 .totop{position:fixed;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));width:46px;height:46px;border-radius:50%;background:var(--surf);border:1px solid var(--border);box-shadow:var(--shadow-up);color:var(--ink);font-size:19px;font-weight:700;z-index:40;display:none}
 .totop.show{display:grid;place-items:center}
 #toast{position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(6px);background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:999px;font-size:13.5px;font-weight:650;z-index:99;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;max-width:88vw;text-align:center;box-shadow:var(--shadow-up)}
@@ -303,6 +348,18 @@ dd a{word-break:break-all}
 <div class="modal" id="mDetail"><div class="sheet">
   <div class="sheet-hd"><h2 id="dTitle"></h2><button class="x" data-close="mDetail">✕</button></div>
   <div class="sheet-bd" id="dBody"></div>
+</div></div>
+
+<!-- Tooned: tela do casting -->
+<div class="modal" id="mCast"><div class="sheet">
+  <div class="sheet-hd"><h2 id="tcTitle"></h2><button class="x" data-close="mCast">✕</button></div>
+  <div class="sheet-bd" id="tcBody"></div>
+</div></div>
+
+<!-- Tooned: ficha da variação -->
+<div class="modal" id="mVar"><div class="sheet">
+  <div class="sheet-hd"><h2 id="tvTitle"></h2><button class="x" data-close="mVar">✕</button></div>
+  <div class="sheet-bd" id="tvBody"></div>
 </div></div>
 
 <!-- Zoom -->
@@ -624,64 +681,108 @@ async function itensDePaginas(titulos,pref,extraHay,aoAvancar){
   return itens;
 }
 
-/* ---- Tooned: os da planilha + todos os castings Tooned da wiki ---- */
-const eTooned = it => nrm(F(it,'casting')||'').includes('tooned') || nrm(F(it,'serie')||'').includes('tooned');
-let TOONED_W=[], toonedEstado='vazio', toonedPasso='', toonedFalha='';
-
-/* Descobre as páginas Tooned por vários caminhos, porque nenhum sozinho
-   pega tudo: "Tooned Twin Mill" aparece por prefixo, "Enzo Ferrari ('Tooned)"
-   só na busca, e a página da série lista lançamentos de castings variados. */
-async function titulosTooned(){
-  const vistos=new Set(), fora=new Set(), titulos=[];
-  const add=t=>{ if(t&&!vistos.has(t)){ vistos.add(t); titulos.push(t); } };
-  const q=async par=>{ try{ return await (await fetch(`${WIKI}?format=json&origin=*&${par}`)).json(); }catch(e){ return null; } };
-  /* títulos que começam com "Tooned" */
-  for(const pre of ['Tooned',"'Tooned"]){
-    const j=await q(`action=query&list=allpages&apnamespace=0&aplimit=500&apprefix=${encodeURIComponent(pre)}`);
-    for(const p of j?.query?.allpages||[]) add(p.title);
-  }
-  /* busca por título e busca ampla — pega "Enzo Ferrari ('Tooned)" e afins */
-  for(const termo of ['intitle:Tooned','Tooned']){
-    const j=await q(`action=query&list=search&srnamespace=0&srlimit=50&srsearch=${encodeURIComponent(termo)}`);
-    for(const s of j?.query?.search||[]) if(nrm(s.title).includes('tooned')) add(s.title);
-  }
-  /* categorias, quando existirem: membros valem mesmo sem "Tooned" no título */
-  for(const cat of ['Category:Tooned','Category:Tooned Cars','Category:Tooned Series']){
-    const j=await q(`action=query&list=categorymembers&cmnamespace=0&cmlimit=500&cmtitle=${encodeURIComponent(cat)}`);
-    for(const p of j?.query?.categorymembers||[]) add(p.title);
-  }
-  /* as páginas da série vêm por último: preenchem os castings que sobraram,
-     mas a página do próprio casting (mais detalhada) tem preferência */
-  for(const p of ['Tooned','Tooned Series']) add(p);
-  /* o que já está na planilha não é buscado de novo */
-  for(const t of titulos) if(porCasting[nrm(t)]) fora.add(t);
-  return titulos.filter(t=>!fora.has(t)).slice(0,60);
+/* ============================================================
+   Base Hot Wheels Tooned (catálogo curado — fonte de verdade)
+   ------------------------------------------------------------
+   TOON é só leitura: nunca é sobrescrito pelo que o usuário marca.
+   A coleção do usuário fica em TU (chave hwt.user.v1), ligada pelo
+   variant.id, então dá para trocar o seed por uma versão nova sem
+   perder nada do que já foi marcado.
+   ============================================================ */
+const TOON = __HW_TOONED_JSON__;
+const TCAST = TOON.castings, TVAR = TOON.variants;
+const TC = {};                                   /* casting_id -> casting + variações */
+for(const c of TCAST) TC[c.casting_id]={...c, vars:[], prod:[]};
+const TV = {};                                   /* variant.id -> variação */
+const KIND={dedicated_tooned_casting:'Casting Tooned dedicado',
+            official_tooned_style_member:'Membro oficial do estilo Tooned',
+            official_segment_member:'Membro oficial do segmento Tooned',
+            legacy_related_casting:'Casting relacionado (legacy)'};
+const ESPECIAL={treasure_hunt:'Treasure Hunt', super_treasure_hunt:'Super Treasure Hunt',
+  zamac:'ZAMAC', retailer_exclusive:'Exclusivo de loja', special_event:'Evento especial',
+  convention_auction:'Leilão de convenção', limited:'Edição limitada', licensed:'Licenciado',
+  premium:'Premium', anniversary:'Aniversário', silver_series:'Silver Series',
+  color_shifters:'Color Shifters', special_release:'Lançamento especial', prototype:'Protótipo'};
+/* entra no progresso padrão só o que é checklist principal e já saiu */
+const tPrim = v => v.primary_checklist===true && v.status==='released';
+for(const v of TVAR){
+  TV[v.id]=v;
+  const c=TC[v.casting_id]; if(!c) continue;
+  (v.variation_type==='production_variant' ? c.prod : c.vars).push(v);
+  v.busca=nrm([v.id,c.canonical_name,v.year,v.series,v.line,v.collector_number,v.toy_number,
+    v.color_deco,v.wheels,v.country,v.variation_label,ESPECIAL[v.special]||v.special,
+    v.special==='super_treasure_hunt'?'sth':'', v.special==='treasure_hunt'?'th':'',
+    (v.notes||[]).join(' ')].filter(x=>x!=null&&x!=='').join(' '));
 }
+const ordemVar=(a,b)=>(a.year||0)-(b.year||0)||String(a.variation_label||'').localeCompare(String(b.variation_label||''))||a.id.localeCompare(b.id);
+for(const id in TC){ TC[id].vars.sort(ordemVar); TC[id].prod.sort(ordemVar);
+  TC[id].busca=nrm([TC[id].canonical_name,TC[id].debut_year,KIND[TC[id].tooned_kind],TC[id].generation].join(' ')); }
+/* pendentes ficam presos ao casting, sem botão de posse */
+const TPEND={};
+for(const p of TOON.pendentes||[]) (TPEND[p.casting_id] ||= []).push(p);
 
-async function carregarTooned(){
-  if(toonedEstado==='carregando') return;
-  toonedEstado='carregando'; toonedFalha=''; toonedPasso='procurando os Tooned na wiki…';
-  try{
-    const titulos=await titulosTooned();
-    if(!titulos.length){ toonedFalha='a wiki não respondeu à busca'; throw new Error('busca vazia'); }
-    TOONED_W=await itensDePaginas(titulos,'tw','tooned',(feitos,total,parciais)=>{
-      toonedPasso=`lendo ${feitos} de ${total} páginas da wiki (${fmt(parciais.length)} versões)…`;
-      if(V.tab==='tooned') $('#subtitle').textContent=subtituloTooned();
-    });
-    if(!TOONED_W.length) toonedFalha='as páginas encontradas não tinham tabela de versões';
-    toonedEstado=TOONED_W.length?'ok':'erro';
-  }catch(e){
-    toonedEstado='erro';
-    if(!toonedFalha) toonedFalha='sem conexão com a wiki';
-    console.error(e);
+/* ---- Coleção do usuário (separada do seed) ---- */
+const TU_KEY='hwt.user.v1';
+let TU={v:{}};
+try{ const raw=localStorage.getItem(TU_KEY); if(raw) TU=Object.assign(TU,JSON.parse(raw)||{}); }catch(e){}
+if(!TU.v||typeof TU.v!=='object') TU.v={};
+let tuT=null;
+function tuSave(){ clearTimeout(tuT); tuT=setTimeout(()=>{
+  try{ localStorage.setItem(TU_KEY,JSON.stringify(TU)); }catch(e){ toast('Não consegui salvar (armazenamento cheio?)'); } },250); }
+const tuOf = id => TU.v[id]||{};
+function tuSet(id,patch){
+  const cur=Object.assign({},TU.v[id]||{},patch);
+  for(const k of Object.keys(cur)){
+    const val=cur[k];
+    if(val===null||val===undefined||val===''||val===false) delete cur[k];
+    else if(k==='quantity'&&(!(val>1))) delete cur[k];   /* 1 é o padrão de quem tem */
   }
-  if(V.tab==='tooned') render(); else renderTabs();
+  if(Object.keys(cur).length) TU.v[id]=cur; else delete TU.v[id];
+  tuSave();
 }
-function subtituloTooned(){
-  const n=ITEMS.filter(eTooned).length;
-  if(toonedEstado==='carregando') return `${fmt(n)} da planilha · ${toonedPasso}`;
-  if(toonedEstado==='erro') return `${fmt(n)} da planilha · não trouxe os demais da wiki (${toonedFalha}). Toque em Tooned de novo para tentar outra vez.`;
-  return `${fmt(n)} da planilha + ${fmt(TOONED_W.length)} da Hot Wheels Wiki — todo carro em estilo Tooned, de qualquer marca.`;
+const tTenho = id => !!tuOf(id).owned;
+function tStats(vars){
+  const base=vars.filter(tPrim);
+  const tenho=base.filter(v=>tTenho(v.id)).length;
+  return {total:base.length, tenho, pct: base.length ? 100*tenho/base.length : 0};
+}
+/* marcações órfãs = seed novo removeu/renomeou ids; nunca apagadas sozinhas */
+const tOrfaos = () => Object.keys(TU.v).filter(id=>!TV[id]);
+
+/* ---- Filtros da aba Tooned ---- */
+const TFILTROS=[
+  ['dedicados','Somente castings Tooned', v=>TC[v.casting_id]?.tooned_kind==='dedicated_tooned_casting'],
+  ['oficiais','Membros oficiais da série', v=>['official_tooned_style_member','official_segment_member'].includes(TC[v.casting_id]?.tooned_kind)],
+  ['legacy','Legacy 2003–2016', v=>v.year&&v.year<=2016],
+  ['modern','Modern 2017+', v=>v.year&&v.year>=2017],
+  ['th','Treasure Hunt', v=>v.special==='treasure_hunt'],
+  ['sth','Super Treasure Hunt', v=>v.special==='super_treasure_hunt'],
+  ['zamac','ZAMAC', v=>v.special==='zamac'],
+  ['excl','Exclusivos', v=>['retailer_exclusive','special_event','convention_auction'].includes(v.special)],
+  ['p5','5-Packs', v=>nrm(v.series||'').includes('5-pack')],
+  ['gulf','Gulf', v=>nrm((v.series||'')+' '+(v.color_deco||'')).includes('gulf')],
+  ['a56','56th Anniversary', v=>nrm(v.series||'').includes('56th')],
+  ['tenho','Tenho', v=>tTenho(v.id)],
+  ['naotenho','Não tenho', v=>!tTenho(v.id)],
+  ['fav','Favoritos', v=>!!tuOf(v.id).favorite],
+  ['prod','Variações de produção', v=>v.variation_type==='production_variant'],
+  ['proto','Protótipos / não lançados', v=>!tPrim(v)],   /* desligado por padrão */
+];
+const TF_MAPA=Object.fromEntries(TFILTROS.map(f=>[f[0],f[2]]));
+/* protótipos e os itens 2014–2015 só entram quando o filtro é ligado à mão */
+function tVariantes(){
+  const on=[...V.tf];
+  const q=nrm(V.q.trim()).split(/\s+/).filter(Boolean);
+  return TVAR.filter(v=>{
+    if(!on.includes('proto')&&!tPrim(v)) return false;
+    for(const k of on){ const f=TF_MAPA[k]; if(f&&!f(v)) return false; }
+    if(q.length&&!q.every(t=>v.busca.includes(t))) return false;
+    return true;
+  });
+}
+function tCastingsVisiveis(){
+  const vis=new Set(tVariantes().map(v=>v.casting_id));
+  return TCAST.filter(c=>vis.has(c.casting_id));
 }
 
 /* ---- Kool Kombi: casting Volkswagen, 100% vindo da wiki ---- */
@@ -709,13 +810,14 @@ async function carregarKool(){
 }
 
 /* ============ Estado da interface ============ */
-const V={tab:'painel', q:'', st:'', ano:'', tipo:'', rar:'', pri:'', escopo:'', sit:'', foto:'', sort:'plan', fOpen:false};
-let listItems=[], listPos=0, detailId=null;
+const V={tab:'painel', q:'', st:'', ano:'', tipo:'', rar:'', pri:'', escopo:'', sit:'', foto:'', sort:'plan', fOpen:false,
+         tview:'cast', tf:new Set()};
+let listItems=[], listPos=0, detailId=null, tCastAtual=null, tVarAtual=null;
 
 const TABS=[['painel','Painel'],['todos','Todos'],['bmw','BMW'],['porsche','Porsche'],['ferrari','Ferrari'],['outras','Outras linhas'],['tooned','Tooned'],['kool','Kool Kombi'],['castings','Castings']];
 function contaTab(k){
   if(k==='todos') return ITEMS.length;
-  if(k==='tooned') return ITEMS.filter(eTooned).length+TOONED_W.length;
+  if(k==='tooned') return TOON.totais.checklist;
   if(k==='kool') return KOOL.length||null;
   if(k==='castings') return DATA.castings.length;
   if(MARCAS[k]) return ITEMS.filter(i=>i.mk===k).length;
@@ -729,12 +831,11 @@ function renderTabs(){
 }
 
 function setTab(k){ V.tab=k; render(); window.scrollTo({top:0}); }
-function limparFiltros(){ Object.assign(V,{st:'',ano:'',tipo:'',rar:'',pri:'',escopo:'',sit:'',foto:''}); }
+function limparFiltros(){ Object.assign(V,{st:'',ano:'',tipo:'',rar:'',pri:'',escopo:'',sit:'',foto:''}); V.tf.clear(); }
 
 /* ============ Filtros ============ */
 function escopoItens(){
   if(V.tab==='todos') return ITEMS;
-  if(V.tab==='tooned') return ITEMS.filter(eTooned).concat(TOONED_W);
   if(V.tab==='kool') return KOOL;
   return ITEMS.filter(i=>i.mk===V.tab);
 }
@@ -868,6 +969,10 @@ function render(){
   $('#sentinel').classList.add('hide');
   if(V.tab==='painel'){ $('#subtitle').textContent=DATA.titulo; renderPainel(); return; }
   if(V.tab==='castings'){ $('#subtitle').textContent='Um card por molde. Toque para ver todas as versões dele.'; renderCastings(); return; }
+  if(V.tab==='tooned'){
+    $('#subtitle').textContent=`Checklist da base Hot Wheels Tooned — ${fmt(TOON.totais.castings)} castings e ${fmt(TOON.totais.checklist)} variações catalogadas.`;
+    renderTooned(); return;
+  }
   if(V.tab==='kool'&&koolEstado!=='ok'){
     $('#subtitle').textContent='Todas as versões da Kool Kombi, direto da Hot Wheels Wiki.';
     if(koolEstado==='vazio') carregarKool();
@@ -878,10 +983,8 @@ function render(){
       : '<p class="vazio load">Buscando as versões da Kool Kombi na Hot Wheels Wiki…</p>';
     return;
   }
-  if(V.tab==='tooned'&&toonedEstado==='vazio') carregarTooned();
   const m=DATA.marcas.find(x=>x.key===V.tab);
   $('#subtitle').textContent = m ? m.desc
-    : V.tab==='tooned' ? subtituloTooned()
     : V.tab==='kool' ? `${fmt(KOOL.length)} versões listadas na Hot Wheels Wiki — marque as suas normalmente.`
     : 'Todas as marcas em uma lista só.';
   renderControles();
@@ -895,7 +998,7 @@ function render(){
   maisCards();
 }
 function maisCards(){
-  if(V.tab==='painel'||V.tab==='castings') return;
+  if(V.tab==='painel'||V.tab==='castings'||V.tab==='tooned') return;
   const lista=$('#lista'); if(!lista) return;
   const fim=Math.min(listPos+60,listItems.length);
   if(listPos>=fim) return;
@@ -976,6 +1079,183 @@ function renderCastings(){
       <div class="prog">${fmt(s.tenho)} de ${fmt(s.total)} na coleção</div>
     </button>`;
   }).join('')+'</div>';
+}
+
+/* ============ Aba Tooned (base curada) ============ */
+function tBadges(v){
+  const b=[];
+  if(v.special&&v.special!=='standard') b.push(`<span class="bdg t-esp t-${v.special}">${esc(ESPECIAL[v.special]||v.special)}</span>`);
+  if(v.variation_type==='production_variant') b.push('<span class="bdg t-prod">Variação de produção</span>');
+  if(!tPrim(v)) b.push(`<span class="bdg t-fora">${v.status==='prototype'?'Protótipo':'Não lançado'}</span>`);
+  if(v.country) b.push(`<span class="bdg">${esc(v.country)}</span>`);
+  return b.join('');
+}
+function tLinhaVar(v){
+  const u=tuOf(v.id), tem=!!u.owned;
+  const ident=[v.collector_number&&`col. ${v.collector_number}`, v.toy_number&&`<span class="toy">${esc(v.toy_number)}</span>`,
+               v.wheels&&`rodas ${esc(v.wheels)}`].filter(Boolean).join(' · ');
+  return `<div class="tvar ${tem?'tem':''}" data-tvar="${esc(v.id)}">
+    <button class="tv-own ${tem?'on':''}" data-town="${esc(v.id)}" aria-pressed="${tem}" title="${tem?'Tenho':'Não tenho'}">${tem?'✓':''}</button>
+    <div class="tv-main">
+      <div class="tv-top"><b>${esc(v.color_deco||'(sem cor documentada)')}</b>
+        <span class="ano">${v.year??'—'}</span></div>
+      <div class="tv-sub">${esc(v.series||v.line||'')}${v.variation_label?` · ${esc(v.variation_label)}`:''}</div>
+      ${ident?`<div class="tv-sub">${ident}</div>`:''}
+      <div class="badges">${tBadges(v)}${u.favorite?'<span class="bdg t-fav">★ favorito</span>':''}${u.quantity>1?`<span class="bdg">×${u.quantity}</span>`:''}</div>
+    </div>
+    <span class="tv-go">›</span>
+  </div>`;
+}
+function tSecao(titulo,vars,nota){
+  if(!vars.length) return '';
+  return `<h4 class="t-sec">${esc(titulo)} <span>${fmt(vars.length)}</span></h4>
+    ${nota?`<p class="t-nota">${esc(nota)}</p>`:''}
+    <div class="tvars">${vars.map(tLinhaVar).join('')}</div>`;
+}
+function renderTooned(){
+  const content=$('#content');
+  const g=tStats(TVAR);
+  const vis=tVariantes(), visIds=new Set(vis.map(v=>v.id));
+  $('#resumo').classList.remove('hide');
+  if(V.tview==='var'){
+    $('#resumo').textContent=`${fmt(vis.length)} ${vis.length===1?'variação':'variações'} · ${fmt(vis.filter(v=>tTenho(v.id)).length)} na coleção`;
+    content.innerHTML=`${tHero(g)}${tChips()}
+      ${vis.length?`<div class="tvars solta">${vis.map(v=>tLinhaVar(v)).join('')}</div>`
+        :'<p class="vazio">Nenhuma variação com esses filtros.</p>'}`;
+    return;
+  }
+  const castings=tCastingsVisiveis();
+  $('#resumo').textContent=`${fmt(castings.length)} ${castings.length===1?'casting':'castings'} · ${fmt(g.tenho)} de ${fmt(g.total)} variações na coleção`;
+  content.innerHTML=`${tHero(g)}${tChips()}
+    ${castings.length?`<div class="grid">${castings.map(c=>{
+      const t=TC[c.casting_id], s=tStats(t.vars.concat(t.prod));
+      const nesta=t.vars.concat(t.prod).filter(v=>visIds.has(v.id)).length;
+      return `<button class="cast-card" data-tcast="${esc(c.casting_id)}">
+        <h3>${esc(c.canonical_name)}</h3>
+        <div class="meta">Estreia ${c.debut_year} · ${c.generation==='legacy'?'Legacy':'Modern'} · ${esc(KIND[c.tooned_kind]||'')}</div>
+        <div class="meta">${fmt(s.total)} variações no checklist${nesta!==s.total?` · ${fmt(nesta)} com os filtros`:''}</div>
+        ${meterHTML({total:s.total,tenho:s.tenho,caminho:0,faltam:s.total-s.tenho})}
+        <div class="prog">${fmt(s.tenho)} de ${fmt(s.total)} · ${s.pct.toLocaleString('pt-BR',{maximumFractionDigits:0})}%</div>
+      </button>`; }).join('')}</div>`
+      : '<p class="vazio">Nenhum casting com esses filtros.</p>'}
+    ${tExtras()}`;
+}
+function tHero(g){
+  return `<div class="hero t-hero"><div class="big">${g.pct.toLocaleString('pt-BR',{maximumFractionDigits:1})}%</div>
+    <div class="sub">da base Tooned — <b>${fmt(g.tenho)}</b> de <b>${fmt(g.total)}</b> variações do checklist principal</div>
+    ${meterHTML({total:g.total,tenho:g.tenho,caminho:0,faltam:g.total-g.tenho})}</div>`;
+}
+function tChips(){
+  const modo=`<div class="chips" style="margin-bottom:8px">
+    <button class="chip ${V.tview==='cast'?'on':''}" data-tview="cast">Por casting</button>
+    <button class="chip ${V.tview==='var'?'on':''}" data-tview="var">Por variação</button></div>`;
+  const fs=TFILTROS.map(([k,rot])=>`<button class="chip ${V.tf.has(k)?'on':''}" data-tf="${k}">${esc(rot)}</button>`).join('');
+  return `${modo}<div class="chips t-filtros">
+    <button class="chip ${V.tf.size?'':'on'}" data-tf="__todos">Todos</button>${fs}</div>`;
+}
+function tExtras(){
+  const orf=tOrfaos();
+  const fam=(TOON.familias||[]).map(f=>`<div class="t-fam"><b>${esc(f.family)} · ${f.year}</b>
+    <p>${esc(f.style_note||'')}</p><p class="t-nota">${esc((f.castings||[]).join(' · '))}</p></div>`).join('');
+  const seg=(TOON.segment2014||[]).map(s=>`<li>${s.year} — <b>${esc(s.name)}</b>${s.color_deco?` (${esc(s.color_deco)})`:''}</li>`).join('');
+  const rev=(TOON.revisao||[]).map(r=>`<li><b>${esc(r.name)}</b><br><span class="t-nota">${esc(r.reason)}</span></li>`).join('');
+  return `
+    <details class="t-extra"><summary>Estilos relacionados (${fmt((TOON.familias||[]).reduce((n,f)=>n+(f.castings||[]).length,0))} castings)</summary>
+      <p class="t-nota">Fatbax, Hardnoze, Blings e Crooze são famílias irmãs de 2004. Ficam de fora do progresso Tooned.</p>${fam}</details>
+    <details class="t-extra"><summary>Tooned por nome da série (2014–2015) — ${fmt((TOON.segment2014||[]).length)} itens</summary>
+      <p class="t-nota">Vendidos sob um segmento chamado Tooned, mas sem o corpo exagerado clássico. Não entram no checklist; use o filtro para vê-los na lista.</p>
+      <ul class="t-lista">${seg}</ul></details>
+    <details class="t-extra"><summary>Em revisão — ${fmt((TOON.revisao||[]).length)} itens</summary>
+      <p class="t-nota">Identidade do casting ainda não confirmada; fora do checklist até a fonte ser reconciliada.</p>
+      <ul class="t-lista">${rev}</ul></details>
+    <p class="nota-rodape">Base de ${TOON.asOf.split('-').reverse().join('/')} · ${fmt(TOON.totais.castings)} castings · ${fmt(TOON.totais.variantes)} variações documentadas · ${fmt(TOON.totais.checklist)} no checklist principal · ${fmt(TOON.totais.producao)} variações de produção.<br>
+      Suas marcações ficam separadas do catálogo (ligadas pelo id da variação), então dá para atualizar a base sem perder a coleção.
+      ${orf.length?`<br><b>${fmt(orf.length)} ${orf.length===1?'marcação sua não corresponde':'marcações suas não correspondem'} a nenhuma variação desta base</b> — provavelmente de uma versão anterior do catálogo. Nada foi apagado; elas voltam a aparecer se os ids retornarem.`:''}</p>`;
+}
+/* ---- Tela do casting ---- */
+function renderCasting(id){
+  const c=TC[id]; if(!c) return;
+  tCastAtual=id;
+  const s=tStats(c.vars.concat(c.prod));
+  $('#tcTitle').textContent=c.canonical_name;
+  const pend=(TPEND[id]||[]).map(p=>`<div class="tvar pend">
+      <span class="tv-own vazio">?</span>
+      <div class="tv-main"><div class="tv-top"><b>${esc(p.series||'Anunciado')}</b><span class="ano">${p.year??'—'}</span></div>
+      <div class="tv-sub">${esc((p.notes||[]).join(' '))}</div></div></div>`).join('');
+  $('#tcBody').innerHTML=`
+    <div class="t-cabec">
+      <div class="t-cabec-l">
+        <div class="meta">Estreia <b>${c.debut_year}</b> · ${c.generation==='legacy'?'Legacy':'Modern'}</div>
+        <div class="meta">${esc(KIND[c.tooned_kind]||'')}${c.confidence!=='high'?` · confiança ${esc(c.confidence)}`:''}</div>
+      </div>
+      <div class="t-cabec-r"><div class="val">${fmt(s.tenho)}<small>/${fmt(s.total)}</small></div>
+        <div class="meta">${s.pct.toLocaleString('pt-BR',{maximumFractionDigits:0})}% completo</div></div>
+    </div>
+    ${meterHTML({total:s.total,tenho:s.tenho,caminho:0,faltam:s.total-s.tenho})}
+    ${(c.notes||[]).length?`<p class="t-nota">${esc(c.notes.join(' '))}</p>`:''}
+    ${tSecao('Lançamentos',c.vars)}
+    ${tSecao('Variações de produção',c.prod,'Mudanças físicas dentro de um mesmo lançamento (roda, base, tampografia, país).')}
+    ${pend?`<h4 class="t-sec">Anunciados / aguardando detalhes <span>${fmt((TPEND[id]||[]).length)}</span></h4>
+      <p class="t-nota">Ainda sem metadados confirmados — não contam no progresso e não têm marcação de posse.</p>
+      <div class="tvars">${pend}</div>`:''}`;
+  abrir('mCast');
+}
+/* ---- Ficha da variação (dados do usuário) ---- */
+function renderVariante(id){
+  const v=TV[id]; if(!v) return;
+  tVarAtual=id;
+  const c=TC[v.casting_id], u=tuOf(id);
+  $('#tvTitle').textContent=`${c?c.canonical_name:''} · ${v.year??''}`;
+  const campo=(rot,html)=>`<label class="t-campo"><span>${rot}</span>${html}</label>`;
+  $('#tvBody').innerHTML=`
+    <div class="badges" style="margin-bottom:10px">${tBadges(v)}</div>
+    <dl>
+      <dt>Cor / deco</dt><dd>${esc(v.color_deco||'—')}</dd>
+      <dt>Ano</dt><dd>${v.year??'—'}</dd>
+      <dt>Série</dt><dd>${esc(v.series||'—')}</dd>
+      <dt>Linha</dt><dd>${esc(v.line||'—')}</dd>
+      <dt>Collector #</dt><dd>${esc(v.collector_number||'—')}</dd>
+      <dt>Toy #</dt><dd>${esc(v.toy_number||'—')}</dd>
+      <dt>Rodas</dt><dd>${esc(v.wheels||'—')}</dd>
+      <dt>País</dt><dd>${esc(v.country||'—')}</dd>
+      <dt>Variação</dt><dd>${esc(v.variation_label||'—')} · ${v.variation_type==='production_variant'?'variação de produção':v.variation_type==='prototype'?'protótipo':'lançamento'}</dd>
+      <dt>id</dt><dd class="toy">${esc(v.id)}</dd>
+    </dl>
+    ${(v.notes||[]).length?`<p class="t-nota">${esc(v.notes.join(' '))}</p>`:''}
+    <h4 class="t-sec">Minha coleção</h4>
+    ${tPrim(v)?'':'<p class="t-nota">Este item está fora do checklist principal (protótipo/não lançado). Marcar aqui não muda o percentual.</p>'}
+    <div class="t-form">
+      <div class="ownseg" role="group" aria-label="Posse">
+        <button class="o0" data-tset="owned:0" aria-pressed="${!u.owned}">✗ Não tenho</button>
+        <button class="o2" data-tset="owned:1" aria-pressed="${!!u.owned}">✓ Tenho</button>
+      </div>
+      ${campo('Quantidade',`<input type="number" min="1" step="1" id="tfQtd" value="${u.quantity||1}">`)}
+      ${campo('Estado',`<select id="tfCond">
+        <option value="">—</option>
+        <option value="carded" ${u.condition==='carded'?'selected':''}>Lacrado no blister</option>
+        <option value="loose" ${u.condition==='loose'?'selected':''}>Solto</option>
+        <option value="both" ${u.condition==='both'?'selected':''}>Tenho os dois</option></select>`)}
+      ${campo('Estado do cartão',`<input type="text" id="tfCard" placeholder="ex.: dobra no canto" value="${esc(u.card_condition||'')}">`)}
+      ${campo('Preço pago (R$)',`<input type="number" min="0" step="0.01" id="tfPreco" value="${u.purchase_price??''}">`)}
+      ${campo('Data da compra',`<input type="date" id="tfData" value="${esc(u.purchase_date||'')}">`)}
+      <label class="t-campo"><span>Favorito</span>
+        <button class="chip ${u.favorite?'on':''}" id="tfFav" aria-pressed="${!!u.favorite}">${u.favorite?'★ Favorito':'☆ Marcar favorito'}</button></label>
+    </div>
+    <div class="nota-box"><h4 style="margin:12px 0 5px;font-size:13px">Minhas anotações</h4>
+      <textarea id="tfNota" placeholder="Onde comprei, detalhes da variação, com quem está…">${esc(u.notes||'')}</textarea></div>`;
+  abrir('mVar');
+  const liga=(sel,ev,fn)=>{ const el=$(sel); if(el) el.addEventListener(ev,fn); };
+  liga('#tfQtd','input',e=>tuSet(id,{quantity:Math.max(1,+e.target.value||1)}));
+  liga('#tfCond','change',e=>tuSet(id,{condition:e.target.value||null}));
+  liga('#tfCard','input',e=>tuSet(id,{card_condition:e.target.value.trim()}));
+  liga('#tfPreco','input',e=>tuSet(id,{purchase_price:e.target.value===''?null:+e.target.value}));
+  liga('#tfData','change',e=>tuSet(id,{purchase_date:e.target.value||null}));
+  liga('#tfNota','input',e=>tuSet(id,{notes:e.target.value.trim()}));
+  liga('#tfFav','click',()=>{ tuSet(id,{favorite:!tuOf(id).favorite}); renderVariante(id); tRefresh(); });
+}
+function tRefresh(){
+  if($('#mCast').classList.contains('open')&&tCastAtual) renderCasting(tCastAtual);
+  if(V.tab==='tooned') renderTooned();
 }
 
 /* ============ Detalhe ============ */
@@ -1144,7 +1424,7 @@ async function exportarBackup(){
       if(blob) fotos.push({k,tipo:blob.type||'image/jpeg',b64:await b64(blob)});
     }
   }catch(e){}
-  const payload={app:'hwc',v:1,quando:new Date().toISOString(),estado:ST,fotos};
+  const payload={app:'hwc',v:2,quando:new Date().toISOString(),estado:ST,tooned:TU,fotos};
   baixar(`hotwheels-backup-${new Date().toISOString().slice(0,10)}.json`,
     new Blob([JSON.stringify(payload)],{type:'application/json'}));
   toast(`Backup gerado: ${fmt(Object.keys(ST.it).length)} itens marcados, ${fmt(fotos.length)} fotos`);
@@ -1154,6 +1434,7 @@ async function importarBackup(file){
     const j=JSON.parse(await file.text());
     if(j.app!=='hwc') throw new Error('formato');
     Object.assign(ST.it,j.estado?.it||{});
+    if(j.tooned?.v){ Object.assign(TU.v,j.tooned.v); tuSave(); }   /* coleção Tooned */
     /* capas de backups antigos guardavam uma foto só — ignora e deixa rebuscar as duas */
     if(j.estado?.coversV===3) Object.assign(ST.covers,j.estado?.covers||{});
     save();
@@ -1183,7 +1464,8 @@ function renderHelp(){
       <li><b>Fotos</b> — abra um item e use <b>📷</b> para fotografar a <b>miniatura solta</b> e o <b>blister</b> (no celular abre a câmera). Use <b>🌐 Wiki</b> para escolher uma foto de referência da Hot Wheels Wiki — quando a linha da tabela tem o mesmo Toy #, ela aparece marcada com <b>✓</b>.</li>
       <li><b>Busca e filtros</b> — a busca cobre casting, modelo, série, cor, Toy #, tampo e notas. Os filtros mostram a contagem de cada opção.</li>
       <li><b>Backup</b> — no Painel, exporte um arquivo .json com marcações, notas e fotos; importe no outro aparelho. Sem backup, os dados vivem só neste navegador.</li>
-      <li><b>Aba Tooned</b> — todo carro em estilo Tooned, de qualquer marca. Junta o que já está na planilha (castings com "Tooned" no nome e os lançamentos da série Tooned) com <b>todos os demais castings Tooned da Hot Wheels Wiki</b>, buscados quando você abre a aba, com internet.</li>
+      <li><b>Aba Tooned</b> — checklist próprio, com catálogo curado de ${fmt(TOON.totais.castings)} castings e ${fmt(TOON.totais.variantes)} variações (${fmt(TOON.totais.checklist)} no progresso). Cada casting tem sua tela com as variações em ordem cronológica, uma seção de <b>variações de produção</b> (roda, base, tampografia, país) e, quando existe, <b>anunciados / aguardando detalhes</b> — que não contam no progresso nem têm marcação de posse. Em cada variação você guarda posse, quantidade, estado (lacrado/solto/os dois), estado do cartão, preço e data da compra, anotações e favorito. Diferenças só de embalagem (long/short card, versão internacional) não são carrinhos diferentes.</li>
+      <li><b>Filtros do Tooned</b> — castings dedicados, membros oficiais da série, Legacy 2003–2016, Modern 2017+, TH, STH, ZAMAC, exclusivos, 5-Packs, Gulf, 56th Anniversary, tenho/não tenho, favoritos e variações de produção. Protótipos e não lançados ficam fora por padrão. Os itens de 2014–2015 que só usavam o nome Tooned e as famílias irmãs (Fatbax, Hardnoze, Blings, Crooze) ficam em seções à parte e <b>não somam</b> ao progresso.</li>
       <li><b>Aba Kool Kombi</b> — esse casting é Volkswagen e não está na planilha (que cobre BMW, Porsche e Ferrari), então a lista de versões vem da Hot Wheels Wiki, também ao abrir a aba.</li>
       <li>Nas duas abas, o que vem da wiki funciona como qualquer item: dá para marcar, fotografar, anotar e tudo entra no backup. Sem internet, aparece só o que é da planilha.</li>
       <li><b>Fotos automáticas</b> — online, o app preenche sozinho <b>as duas fotos</b> de cada carrinho a partir da wiki: a <b>miniatura solta</b> e a <b>cartela/blister</b>. Na foto da solta, quando a tabela da wiki tem uma linha com o <b>mesmo Toy #</b> do item, ele usa a foto daquela versão exata (a etiqueta mostra "wiki (esta versão)"); senão usa a foto geral do casting. No card da lista aparece o blister, com a solta num recorte no canto. Sua própria foto sempre tem prioridade sobre as automáticas.</li>
@@ -1211,8 +1493,40 @@ document.addEventListener('click',e=>{
   const modal=el.classList&&el.classList.contains('modal')?el:null; if(modal){ fechar(modal.id); return; }
 
   const tab=el.closest('[data-tab]');
-  if(tab){ if(tab.dataset.tab==='tooned'&&toonedEstado==='erro') toonedEstado='vazio'; setTab(tab.dataset.tab); return; }
+  if(tab){ setTab(tab.dataset.tab); return; }
   if(el.closest('#btnHelp')){ renderHelp(); return; }
+  /* --- aba Tooned --- */
+  const tview=el.closest('[data-tview]'); if(tview){ V.tview=tview.dataset.tview; renderTooned(); return; }
+  const tf=el.closest('[data-tf]');
+  if(tf){
+    const k=tf.dataset.tf;
+    if(k==='__todos') V.tf.clear();
+    else if(V.tf.has(k)) V.tf.delete(k);
+    else{
+      V.tf.add(k);
+      /* pares que se anulam: manter os dois ligados nunca devolve nada */
+      const opostos={tenho:'naotenho',naotenho:'tenho',legacy:'modern',modern:'legacy',dedicados:'oficiais',oficiais:'dedicados'};
+      if(opostos[k]) V.tf.delete(opostos[k]);
+    }
+    renderTooned(); return;
+  }
+  const town=el.closest('[data-town]');
+  if(town){
+    const id=town.dataset.town;
+    tuSet(id,{owned:!tTenho(id)});
+    toast(tTenho(id)?'Adicionado à coleção ✓':'Removido da coleção');
+    tRefresh(); if($('#mVar').classList.contains('open')&&tVarAtual===id) renderVariante(id);
+    return;
+  }
+  const tcast=el.closest('[data-tcast]'); if(tcast){ renderCasting(tcast.dataset.tcast); return; }
+  const tvar=el.closest('[data-tvar]'); if(tvar){ renderVariante(tvar.dataset.tvar); return; }
+  const tset=el.closest('[data-tset]');
+  if(tset&&tVarAtual){
+    const [campo,valor]=tset.dataset.tset.split(':');
+    tuSet(tVarAtual,{[campo]: valor==='1'});
+    renderVariante(tVarAtual); tRefresh(); return;
+  }
+
   const chip=el.closest('[data-st]'); if(chip){ V.st=chip.dataset.st; render(); return; }
   if(el.closest('#btnKoolRetry')){ koolEstado='vazio'; render(); return; }
   if(el.closest('#btnFiltros')){ V.fOpen=!V.fOpen; $('#fpanel').classList.toggle('open',V.fOpen); $('#btnFiltros').classList.toggle('on',V.fOpen||!$('#fbN').classList.contains('hide')); return; }

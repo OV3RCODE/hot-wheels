@@ -20,6 +20,7 @@ import openpyxl  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 XLSX = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "data" / "hotwheels_bmw_porsche_ferrari_checklist.xlsx"
+TOONED = ROOT / "data" / "hot_wheels_tooned_variants_2026-08-19.json"
 TEMPLATE = ROOT / "app" / "template.html"
 OUT = ROOT / "index.html"
 
@@ -53,6 +54,56 @@ def read_items(ws):
             continue
         rows.append(vals)
     return headers, rows
+
+
+def load_tooned():
+    """Lê o seed Tooned e valida a integridade antes de embutir no app.
+
+    O seed é fonte de verdade só do catálogo; a coleção do usuário vive
+    separada (localStorage, por variant.id), então trocar este arquivo por
+    uma versão nova não apaga nada do que o usuário marcou.
+    """
+    data = json.loads(TOONED.read_text(encoding="utf-8"))
+    castings = data["castings"]
+    variants = data["variants"]
+
+    erros = []
+    vistos = set()
+    for v in variants:
+        if v["id"] in vistos:
+            erros.append(f"variant.id duplicado: {v['id']}")
+        vistos.add(v["id"])
+    ids_castings = set()
+    for c in castings:
+        if c["casting_id"] in ids_castings:
+            erros.append(f"casting_id duplicado: {c['casting_id']}")
+        ids_castings.add(c["casting_id"])
+    for v in variants:
+        if v["casting_id"] not in ids_castings:
+            erros.append(f"casting_id órfão em {v['id']}: {v['casting_id']}")
+    if erros:
+        raise SystemExit("Seed Tooned inválido:\n  " + "\n  ".join(erros[:20]))
+
+    checklist = [v for v in variants if v.get("primary_checklist") and v.get("status") == "released"]
+    producao = [v for v in variants if v.get("variation_type") == "production_variant"]
+    print(f"Tooned: {len(castings)} castings, {len(variants)} variações, "
+          f"{len(checklist)} no checklist principal, {len(producao)} variações de produção, "
+          f"{len(data.get('segment_name_only_2014_2015', []))} de 2014-2015, "
+          f"{len(data.get('review_queue', []))} em revisão")
+
+    # só o que o app usa, para não inflar o arquivo único
+    return {
+        "asOf": data["meta"]["as_of"],
+        "castings": castings,
+        "variants": variants,
+        "segment2014": data.get("segment_name_only_2014_2015", []),
+        "familias": data.get("related_style_families", []),
+        "pendentes": data.get("upcoming_or_pending", []),
+        "revisao": data.get("review_queue", []),
+        "fontes": data.get("sources", {}),
+        "totais": {"castings": len(castings), "variantes": len(variants),
+                   "checklist": len(checklist), "producao": len(producao)},
+    }
 
 
 def main():
@@ -118,15 +169,15 @@ def main():
         "fontes": fontes,
     }
 
-    payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    # Evita fechamento prematuro da tag <script> por strings dos dados
-    payload = payload.replace("</", "<\\/")
+    def embutir(obj):
+        # Evita fechamento prematuro da tag <script> por strings dos dados
+        return json.dumps(obj, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
     html = TEMPLATE.read_text(encoding="utf-8")
-    marker = "__HW_DATA_JSON__"
-    if marker not in html:
-        raise SystemExit("Marcador __HW_DATA_JSON__ não encontrado no template")
-    html = html.replace(marker, payload, 1)
+    for marker, obj in (("__HW_DATA_JSON__", data), ("__HW_TOONED_JSON__", load_tooned())):
+        if marker not in html:
+            raise SystemExit(f"Marcador {marker} não encontrado no template")
+        html = html.replace(marker, embutir(obj), 1)
     OUT.write_text(html, encoding="utf-8")
 
     total = sum(len(m["itens"]) for m in marcas)
