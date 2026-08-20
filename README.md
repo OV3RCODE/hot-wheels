@@ -26,8 +26,10 @@ pesquisa fechada em 15/08/2026).
     As fotos ficam guardadas no próprio navegador (IndexedDB), redimensionadas para economizar espaço.
   - **🌐 Wiki** — busca as fotos da página do casting na Hot Wheels Wiki (Fandom) e deixa você
     escolher; quando a linha da tabela tem o **mesmo Toy #**, ela vem marcada com ✓.
-  - **Capas automáticas** — online, os cards sem foto recebem uma foto do casting **na cartela/blister**
-    (ou a imagem principal da página, quando não há foto de cartela).
+  - **Fotos automáticas** — online, o app preenche **as duas fotos** de todo carrinho a partir da wiki:
+    a da miniatura solta e a da cartela/blister. Para a solta, se a tabela de versões tiver uma linha
+    com o **mesmo Toy #**, usa a foto daquela versão exata; senão, a foto geral do casting. O card da
+    lista mostra o blister com a solta num recorte no canto. Fotos suas têm prioridade sobre as automáticas.
 - **Busca** (casting, modelo, série, cor, Toy #, tampo, ano…) e **filtros** com contagem:
   status, ano, tipo, raridade, prioridade, escala/escopo, situação e com/sem foto.
 - **Castings**: um card por molde com o range de anos, total de versões e seu progresso — toque
